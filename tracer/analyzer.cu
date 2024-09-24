@@ -5,6 +5,7 @@
 
 #include "analyzer.h"
 #include "analyzer_utils.h"
+#include "analyzer_helper.hpp"
 
 using namespace yosemite;
 
@@ -33,13 +34,14 @@ typedef struct Timer{
 static Timer_t _timer;
 
 static bool first_kernel_finished = false;
+std::string trace_folder_name;
 
 std::map<uint64_t, KernelEvent_t> kernel_events;
 std::map<uint64_t, AllocEvent_t> alloc_events;
 
 std::map<DevPtr, AllocEvent_t> active_memories;
 
-std::map<KernelEvent_t, std::list<TraceEntry>> _traces;
+std::list<TraceEntry> _traces;
 
 
 YosemiteResult yosemite_alloc_callback(DevPtr ptr, size_t size) {
@@ -63,6 +65,7 @@ YosemiteResult yosemite_free_callback(DevPtr ptr) {
         return YOSEMITE_ERROR;
     }
     active_memories.erase(it);
+
     _timer.increment(true);
     return YOSEMITE_SUCCESS;
 }
@@ -80,6 +83,8 @@ YosemiteResult yosemite_memset_callback() {
 
 YosemiteResult yosemite_kernel_start_callback(std::string kernel_name, uint64_t grid_id) {
     if (first_kernel_finished) {
+        trace_folder_name = "traces_" + getCurrentDateTime();
+        checkFolderExistance(trace_folder_name);
         yosemite_kernel_end_callback();
     } else {
         first_kernel_finished = true;
@@ -90,7 +95,7 @@ YosemiteResult yosemite_kernel_start_callback(std::string kernel_name, uint64_t 
     event.kernel_name = kernel_name;
     event.grid_id = grid_id;
     kernel_events.emplace(_timer.get(), event);
-    _traces.emplace(event, std::list<TraceEntry>());
+    _traces =  std::list<TraceEntry>();
 
     _timer.increment(true);
     return YOSEMITE_SUCCESS;
@@ -101,16 +106,15 @@ YosemiteResult yosemite_kernel_end_callback() {
     KernelEvent_t& event = std::prev(kernel_events.end())->second;
     event.end_time = _timer.get();
 
-    _timer.increment(true);
+    yosemite_dump_traces(event.grid_id);
 
+    _timer.increment(true);
     return YOSEMITE_SUCCESS;
-    
 }
 
 
 YosemiteResult yosemite_memory_trace_analysis(mem_access_t* ma) {
     KernelEvent_t kernel_event = std::prev(kernel_events.end())->second;
-    auto& traces = _traces[kernel_event];
 
     for (int i = 0; i < GPU_WARP_SIZE; i++) {
         TraceEntry entry;
@@ -120,9 +124,8 @@ YosemiteResult yosemite_memory_trace_analysis(mem_access_t* ma) {
             entry.size = ma->size;
             entry.timestampe = _timer.get();
             entry.access_type = ma->is_write ? 1 : 0;
-            // entry.sm_id = ma->sm_id;
-            // entry.warp_id = ma->warp_id;
-            traces.push_back(entry);
+            entry.mem_type = ma->mem_type;
+            _traces.push_back(entry);
         }
     }
 
@@ -131,30 +134,29 @@ YosemiteResult yosemite_memory_trace_analysis(mem_access_t* ma) {
 }
 
 
-YosemiteResult yosemite_dump_traces(std::string filename) {
+YosemiteResult yosemite_dump_traces(uint64_t grid_id) {
+    std::string filename = trace_folder_name + "/kernel_" + std::to_string(grid_id) + ".txt";
+    printf("Dumping traces to %s\n", filename.c_str());
+
     std::ofstream out(filename);
 
-    for (auto kernel : _traces) {
-        for (auto& trace : kernel.second) {
-            out << trace.page_no << " "
-                << trace.addr << " "
-                << trace.size << " "
-                << trace.timestampe << " "
-                << trace.access_type << " "
-                << "0 0"
-                << std::endl;
-        }
+    for (auto& trace : _traces) {
+        out << trace.page_no << " "
+            << trace.addr << " "
+            << trace.size << " "
+            << trace.timestampe << " "
+            << trace.access_type << " "
+            << (int)trace.mem_type
+            << std::endl;
     }
 
-
-    for (auto event : alloc_events) {
+    for (auto event : active_memories) {
         out << "ALLOCATION: " << " " << event.second.addr << " " << event.second.size << std::endl;
     }
 
     for (auto event : kernel_events) {
         out << "KERNEL: " << event.second.timestamp << " " << event.second.end_time << std::endl;
     }
-
 
     out.close();
     return YOSEMITE_SUCCESS;

@@ -23,4 +23,4 @@ YosemiteResult yosemite_kernel_end_callback();
 
 YosemiteResult yosemite_memory_trace_analysis(mem_access_t* ma);
 
-YosemiteResult yosemite_dump_traces(std::string filename);
+YosemiteResult yosemite_dump_traces(uint64_t grid_id);

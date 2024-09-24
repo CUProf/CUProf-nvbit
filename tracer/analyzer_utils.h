@@ -81,8 +81,7 @@ typedef struct TraceEntry
     uint32_t size;
     uint64_t timestampe;
     uint32_t access_type; // 0: read 1: write
-    // uint32_t sm_id;
-    // uint32_t warp_id;
+    InstrType::MemorySpace mem_type;
 
     TraceEntry() = default;
 

@@ -268,28 +268,25 @@ void nvbit_at_cuda_event(CUcontext ctx, int is_exit, nvbit_api_cuda_t cbid,
                 cbid == API_CUDA_cuLaunchKernelEx) {
                 cuLaunchKernelEx_params* p = (cuLaunchKernelEx_params*)params;
                 printf(
-                    "MEMTRACE: CTX 0x%016lx - LAUNCH - Kernel pc 0x%016lx - "
-                    "Kernel name %s - grid launch id %ld - grid size %d,%d,%d "
-                    "- block size %d,%d,%d - nregs %d - shmem %d - cuda stream "
-                    "id %ld\n",
-                    (uint64_t)ctx, pc, func_name, grid_launch_id,
-                    p->config->gridDimX, p->config->gridDimY,
-                    p->config->gridDimZ, p->config->blockDimX,
-                    p->config->blockDimY, p->config->blockDimZ, nregs,
-                    shmem_static_nbytes + p->config->sharedMemBytes,
-                    (uint64_t)p->config->hStream);
+                    "LAUNCH KERNEL: %s - grid launch id %ld\n"
+                    "- grid size (%d,%d,%d) - block size (%d,%d,%d)\n - nregs %d - shmem %d"
+                    "- CTX 0x%016lx - stream id %ld - Kernel pc 0x%016lx\n",
+                    func_name, grid_launch_id, 
+                    p->config->gridDimX, p->config->gridDimY, p->config->gridDimZ,
+                    p->config->blockDimX, p->config->blockDimY, p->config->blockDimZ,
+                    nregs, shmem_static_nbytes + p->config->sharedMemBytes,
+                    (uint64_t)ctx, (uint64_t)p->config->hStream, pc);
             } else {
                 cuLaunchKernel_params* p = (cuLaunchKernel_params*)params;
                 printf(
-                    "MEMTRACE: CTX 0x%016lx - LAUNCH - Kernel pc 0x%016lx - "
-                    "Kernel name %s - grid launch id %ld - grid size %d,%d,%d "
-                    "- block size %d,%d,%d - nregs %d - shmem %d - cuda stream "
-                    "id %ld\n",
-                    (uint64_t)ctx, pc, func_name, grid_launch_id, p->gridDimX,
-                    p->gridDimY, p->gridDimZ, p->blockDimX, p->blockDimY,
-                    p->blockDimZ, nregs,
-                    shmem_static_nbytes + p->sharedMemBytes,
-                    (uint64_t)p->hStream);
+                    "LAUNCH KERNEL: %s - grid launch id %ld\n"
+                    "- grid size (%d,%d,%d) - block size (%d,%d,%d) - nregs %d - shmem %d\n"
+                    "- CTX 0x%016lx - stream id %ld - Kernel pc 0x%016lx\n",
+                    func_name, grid_launch_id, 
+                    p->gridDimX, p->gridDimY, p->gridDimZ,
+                    p->blockDimX, p->blockDimY, p->blockDimZ,
+                    nregs, shmem_static_nbytes + p->sharedMemBytes,
+                    (uint64_t)ctx, (uint64_t)p->hStream, pc);
             }
 
         } else {
@@ -318,7 +315,7 @@ void nvbit_at_cuda_event(CUcontext ctx, int is_exit, nvbit_api_cuda_t cbid,
             pthread_mutex_unlock(&cuda_event_mutex);
             return;
         }
-        printf("MEMTRACE: %s\n", name);
+        printf("ALLOC EVENT: %s\n", name);
         if (cbid == API_CUDA_cuMemAlloc) {
             cuMemAlloc_params* p = (cuMemAlloc_params*)params;
             printf("ptr %p, size %u\n", p->dptr, p->bytesize);
@@ -354,7 +351,7 @@ void nvbit_at_cuda_event(CUcontext ctx, int is_exit, nvbit_api_cuda_t cbid,
             return;
         }
 
-        printf("MEMTRACE: %s\n", name);
+        printf("FREE EVENT: %s\n", name);
         if (cbid == API_CUDA_cuMemFree) {
             cuMemFree_params* p = (cuMemFree_params*)params;
             printf("ptr %u\n", p->dptr);
@@ -470,5 +467,4 @@ void nvbit_at_ctx_term(CUcontext ctx) {
 }
 
 void nvbit_at_term() {
-    yosemite_dump_traces("traces.txt");
 }

@@ -21,6 +21,8 @@
 /* contains definition of the mem_access_t structure */
 #include "common.h"
 
+#include "analyzer.h"
+
 #define CHANNEL_SIZE (1l << 20)
 
 enum class RecvThreadState {
@@ -260,6 +262,8 @@ void nvbit_at_cuda_event(CUcontext ctx, int is_exit, nvbit_api_cuda_t cbid,
             /* enable instrumented code to run */
             nvbit_enable_instrumented(ctx, func, true);
 
+            yosemite_kernel_start_callback(func_name, grid_launch_id);
+
             if (cbid == API_CUDA_cuLaunchKernelEx_ptsz ||
                 cbid == API_CUDA_cuLaunchKernelEx) {
                 cuLaunchKernelEx_params* p = (cuLaunchKernelEx_params*)params;
@@ -314,13 +318,14 @@ void nvbit_at_cuda_event(CUcontext ctx, int is_exit, nvbit_api_cuda_t cbid,
             pthread_mutex_unlock(&cuda_event_mutex);
             return;
         }
-        printf("MEMTRACE: %s\t", name);
+        printf("MEMTRACE: %s\n", name);
         if (cbid == API_CUDA_cuMemAlloc) {
             cuMemAlloc_params* p = (cuMemAlloc_params*)params;
             printf("ptr %p, size %u\n", p->dptr, p->bytesize);
         } else if (cbid == API_CUDA_cuMemAlloc_v2) {    // cudaMalloc
             cuMemAlloc_v2_params* p = (cuMemAlloc_v2_params*)params;
-            printf("ptr %llu, size %lu\n", *((unsigned long long*)p->dptr), p->bytesize);
+            yosemite_alloc_callback(*(p->dptr), p->bytesize);
+            // printf("ptr %llu, size %lu\n", *((unsigned long long*)p->dptr), p->bytesize);
         } else if (cbid == API_CUDA_cuMemAllocManaged) {    // cudaMallocManaged
             cuMemAllocManaged_params* p = (cuMemAllocManaged_params*)params;
             printf("ptr %p, flag %d, size %ld\n", p->dptr, p->flags, p->bytesize);
@@ -349,13 +354,14 @@ void nvbit_at_cuda_event(CUcontext ctx, int is_exit, nvbit_api_cuda_t cbid,
             return;
         }
 
-        printf("MEMTRACE: %s\t", name);
+        printf("MEMTRACE: %s\n", name);
         if (cbid == API_CUDA_cuMemFree) {
             cuMemFree_params* p = (cuMemFree_params*)params;
             printf("ptr %u\n", p->dptr);
-        } else if (cbid == API_CUDA_cuMemFree_v2) {
+        } else if (cbid == API_CUDA_cuMemFree_v2) {   // cudaFree
             cuMemFree_v2_params* p = (cuMemFree_v2_params*)params;
-            printf("v2 ptr %llu\n", p->dptr);
+            yosemite_free_callback(p->dptr);
+            // printf("v2 ptr %llu\n", p->dptr);
         } else if (cbid == API_CUDA_cuMemFreeHost) {
             cuMemFreeHost_params* p = (cuMemFreeHost_params*)params;
             printf("ptr %p\n", p->p);
@@ -392,6 +398,8 @@ void* recv_thread_fun(void* args) {
                 mem_access_t* ma =
                     (mem_access_t*)&recv_buffer[num_processed_bytes];
 
+                yosemite_memory_trace_analysis(ma);
+                /*
                 std::stringstream ss;
                 ss << "CTX " << HEX(ctx) << " - grid_launch_id "
                    << ma->grid_launch_id << " - CTA " << ma->cta_id_x << ","
@@ -406,8 +414,9 @@ void* recv_thread_fun(void* args) {
                 for (int i = 0; i < 32; i++) {
                     ss << HEX(ma->addrs[i]) << " ";
                 }
-
                 printf("MEMTRACE: %s\n", ss.str().c_str());
+                */
+
                 num_processed_bytes += sizeof(mem_access_t);
             }
         }
@@ -451,9 +460,15 @@ void nvbit_at_ctx_term(CUcontext ctx) {
     while (ctx_state->recv_thread_done != RecvThreadState::FINISHED)
         ;
 
+    yosemite_kernel_end_callback();
+
     ctx_state->channel_host.destroy(false);
     cudaFree(ctx_state->channel_dev);
     skip_callback_flag = false;
     delete ctx_state;
     pthread_mutex_unlock(&mutex);
+}
+
+void nvbit_at_term() {
+    yosemite_dump_traces("traces.txt");
 }

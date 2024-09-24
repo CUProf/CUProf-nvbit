@@ -2,6 +2,8 @@
 #include <stdint.h>
 #include "nvbit.h"
 
+#define GPU_WARP_SIZE (32)
+
 #define HEX(x)                                                            \
     "0x" << std::setfill('0') << std::setw(16) << std::hex << (uint64_t)x \
          << std::dec
@@ -14,11 +16,12 @@ typedef struct {
     int cta_id_x;
     int cta_id_y;
     int cta_id_z;
+    int sm_id;
     int warp_id;
     int opcode_id;
     InstrType::MemorySpace mem_type;
     int size;   // bytes
     bool is_read;
     bool is_write;
-    uint64_t addrs[32];
+    uint64_t addrs[GPU_WARP_SIZE];
 } mem_access_t;

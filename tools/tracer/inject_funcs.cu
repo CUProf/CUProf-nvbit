@@ -38,6 +38,7 @@ extern "C" __device__ __noinline__ void instrument_mem(int pred, int opcode_id,
     ma.cta_id_x = cta.x;
     ma.cta_id_y = cta.y;
     ma.cta_id_z = cta.z;
+    ma.sm_id = get_smid();
     ma.warp_id = get_warpid();
     ma.opcode_id = opcode_id;
     ma.mem_type = static_cast<InstrType::MemorySpace>(mem_type);

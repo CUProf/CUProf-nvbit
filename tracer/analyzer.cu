@@ -82,7 +82,7 @@ YosemiteResult yosemite_memset_callback() {
 
 
 YosemiteResult yosemite_kernel_start_callback(std::string kernel_name, uint64_t grid_id) {
-    if (first_kernel_finished) {
+    if (!first_kernel_finished) {
         trace_folder_name = "traces_" + getCurrentDateTime();
         checkFolderExistance(trace_folder_name);
         yosemite_kernel_end_callback();

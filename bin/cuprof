@@ -1,0 +1,89 @@
+#!/bin/bash
+
+# check if CUPROF_HOME is set
+if [ -z ${CUDA_PROF_HOME} ]; then
+    echo "CUDA_PROF_HOME is not set."
+    echo "Please set CUDA_PROF_HOME to the root directory of this repo."
+    exit 1
+fi
+
+function help_func()
+{
+    cat <<EOF
+Description: A collection of CUDA application profilers.
+Usage:
+    -h, --help
+        Print this help message.
+    -t <tool_name>
+        tracer: Trace memory access of CUDA kernels.
+        metricer: Collect metrics for CUDA kernels.
+EOF
+    exit 0
+}
+
+function error_hint()
+{
+error_message=$1
+cat <<EOF
+${error_message}
+Tip: Use "cuprof -h" for more usage description.
+EOF
+    exit 1
+}
+
+# for debugging
+# set -x
+
+while [ -n "$1" ]
+do
+    arg="$1" ; shift
+    case "${arg}" in
+        -t)
+        export TOOL=$1
+        shift
+        ;;
+        -v)
+        export VERBOSE=1
+        ;;
+        -h)
+        help_func
+        break
+        ;;
+        * )
+        set -- "${arg}" "$@"
+        break
+        ;;
+    esac
+done
+
+EXECUTABLE=$1
+ARGS="${*:2}"
+
+if [ -z ${EXECUTABLE} ]
+then
+    error_hint "Specify the executable to run."
+fi
+
+if [ -z ${TOOL} ]
+then
+    error_hint "Specify tool via -t <tool_name>"
+fi
+
+if [ ! -z ${VERBOSE} ]
+then
+    export OUTPUT_REDIRECT=prof.log
+else
+    export OUTPUT_REDIRECT=/dev/null
+fi
+
+echo "${EXECUTABLE} profiling "
+# Profile the application
+if [ ${TOOL} == "tracer" ]
+then
+LD_PRELOAD=${CUDA_PROF_HOME}/tracer/libcuda-tracer.so ${EXECUTABLE} ${ARGS} &> ${OUTPUT_REDIRECT}
+elif [ ${TOOL} == "metricer" ]
+then
+LD_PRELOAD=${CUDA_PROF_HOME}/metricer/libcuda-metricer.so ${EXECUTABLE} ${ARGS} &> ${OUTPUT_REDIRECT}
+else
+    error_hint "Invalid tool name."
+fi

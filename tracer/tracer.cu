@@ -269,7 +269,7 @@ void nvbit_at_cuda_event(CUcontext ctx, int is_exit, nvbit_api_cuda_t cbid,
                 cuLaunchKernelEx_params* p = (cuLaunchKernelEx_params*)params;
                 printf(
                     "LAUNCH KERNEL: %s - grid launch id %ld\n"
-                    "- grid size (%d,%d,%d) - block size (%d,%d,%d)\n - nregs %d - shmem %d"
+                    "- grid size (%d,%d,%d) - block size (%d,%d,%d) - nregs %d - shmem %d\n"
                     "- CTX 0x%016lx - stream id %ld - Kernel pc 0x%016lx\n",
                     func_name, grid_launch_id, 
                     p->config->gridDimX, p->config->gridDimY, p->config->gridDimZ,

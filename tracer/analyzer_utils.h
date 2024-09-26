@@ -73,27 +73,6 @@ typedef struct MemsetEvent : public Event {
     ~MemsetEvent() = default;
 }MemsetEvent_t;
 
-
-typedef struct TraceEntry
-{
-    uint64_t addr;
-    uint64_t page_no;
-    uint32_t size;
-    uint64_t timestampe;
-    uint32_t access_type; // 0: read 1: write
-    InstrType::MemorySpace mem_type;
-
-    TraceEntry() = default;
-
-    ~TraceEntry() = default;
-
-    TraceEntry(uint64_t addr, uint32_t size, uint32_t access_type)
-        : addr(addr), size(size), access_type(access_type) {
-            timestampe = 0;
-            page_no = addr >> 12;
-    }
-}TraceEntry_t;
-
 }   // yosemite
 
 #endif // YOSEMITE_ANALYZER_UTILS_H

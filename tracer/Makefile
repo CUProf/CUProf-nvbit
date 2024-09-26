@@ -33,7 +33,7 @@ ARCH?=all
 mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
 current_dir := $(notdir $(patsubst %/,%,$(dir $(mkfile_path))))
 
-NVBIT_TOOL=lib$(current_dir).so
+NVBIT_TOOL=libcuda-$(current_dir).so
 
 all: $(NVBIT_TOOL)
 

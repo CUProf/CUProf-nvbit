@@ -9,6 +9,27 @@
 
 using namespace yosemite;
 
+
+typedef struct TraceEntry
+{
+    uint64_t addr;
+    uint64_t page_no;
+    uint32_t size;
+    uint64_t timestampe;
+    uint32_t access_type; // 0: read 1: write
+    InstrType::MemorySpace mem_type;
+
+    TraceEntry() = default;
+
+    ~TraceEntry() = default;
+
+    TraceEntry(uint64_t addr, uint32_t size, uint32_t access_type)
+        : addr(addr), size(size), access_type(access_type) {
+            timestampe = 0;
+            page_no = addr >> 12;
+    }
+}TraceEntry_t;
+
 typedef struct Timer{
     uint64_t access_timer;
     uint64_t event_timer;
@@ -85,9 +106,9 @@ YosemiteResult yosemite_kernel_start_callback(std::string kernel_name, uint64_t 
     if (!first_kernel_finished) {
         trace_folder_name = "traces_" + getCurrentDateTime();
         checkFolderExistance(trace_folder_name);
-        yosemite_kernel_end_callback();
-    } else {
         first_kernel_finished = true;
+    } else {
+        yosemite_kernel_end_callback();
     }
 
     KernelEvent_t event;

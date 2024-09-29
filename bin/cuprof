@@ -69,13 +69,6 @@ then
     error_hint "Specify tool via -t <tool_name>"
 fi
 
-if [ ! -z ${VERBOSE} ]
-then
-    export OUTPUT_REDIRECT=prof.log
-else
-    export OUTPUT_REDIRECT=/dev/null
-fi
-
 
 if [ ! -z ${RESULT_DIR} ]
 then
@@ -86,9 +79,16 @@ fi
 
 if [ ${EXECUTABLE} == "python" ] || [ ${EXECUTABLE} == "python3" ];
 then
-    export APP_NAME=$(basename ${ARGS[0]})
+    export APP_NAME=$(basename ${ARGS[0]} .py)
 else
     export APP_NAME=${EXECUTABLE#./}
+fi
+
+if [ ! -z ${VERBOSE} ]
+then
+    export OUTPUT_REDIRECT=${RESULT_DIR}/${APP_NAME}.cuprof.log
+else
+    export OUTPUT_REDIRECT=/dev/null
 fi
 
 echo "${EXECUTABLE} ${ARGS}"

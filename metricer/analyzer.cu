@@ -85,14 +85,16 @@ YosemiteResult yosemite_kernel_end_callback(uint64_t mem_accesses) {
 }
 
 YosemiteResult yosemite_dump_stats() {
-    const char* filename = std::getenv("STATS_FILE_NAME");
-    if (filename != nullptr) {
-        fprintf(stdout, "STATS_FILE_NAME: %s\n", filename);
+    const char* env_filename = std::getenv("METRICS_FILE_NAME");
+    std::string filename;
+    if (env_filename) {
+        fprintf(stdout, "METRICS_FILE_NAME: %s\n", env_filename);
+        filename = std::string(env_filename) + "_" + getCurrentDateTime() + ".txt";
     } else {
-        fprintf(stdout, "STATS_FILE_NAME environment variable not set\n");
-        filename = "stats.txt";
+        filename = "metrics_" + getCurrentDateTime() + ".txt";
+        fprintf(stdout, "No filename specified. Using default filename: %s\n", filename.c_str());
     }
-    printf("Dumping traces to %s\n", filename);
+    printf("Dumping traces to %s\n", filename.c_str());
 
     std::ofstream out(filename);
     int count = 0;

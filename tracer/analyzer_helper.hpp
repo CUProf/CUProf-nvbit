@@ -2,7 +2,7 @@
 
 #include <ctime>
 #include <sstream>
-#include <sys/stat.h>
+#include <sys/stat.h>   // for folder creation
 
 void checkFolderExistance(std::string folder_name) {
     // Check if the folder exists

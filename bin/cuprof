@@ -76,15 +76,33 @@ else
     export OUTPUT_REDIRECT=/dev/null
 fi
 
+
+if [ ! -z ${RESULT_DIR} ]
+then
+    echo "Result directory: ${RESULT_DIR}"
+else
+    export RESULT_DIR=.
+fi
+
+if [ ${EXECUTABLE} == "python" ] || [ ${EXECUTABLE} == "python3" ];
+then
+    export APP_NAME=$(basename ${ARGS[0]})
+else
+    export APP_NAME=${EXECUTABLE#./}
+fi
+
 echo "${EXECUTABLE} ${ARGS}"
-# Profile the application
+
+# Profile the application with the specified tool
 if [ ${TOOL} == "tracer" ]
 then
-    echo "Tracing memory access of CUDA kernels."
+    echo "Tracing memory access of ${APP_NAME}..."
+    export TRACES_FOLDER_NAME="${RESULT_DIR}/traces_${APP_NAME}"
     LD_PRELOAD=${CUDA_PROF_HOME}/tracer/libcuda-tracer.so ${EXECUTABLE} ${ARGS} &> ${OUTPUT_REDIRECT}
 elif [ ${TOOL} == "metricer" ]
 then
-    echo "Collecting metrics for CUDA kernels."
+    echo "Collecting metrics for ${APP_NAME}..."
+    export METRICS_FILE_NAME="${RESULT_DIR}/metrics_${APP_NAME}"
     LD_PRELOAD=${CUDA_PROF_HOME}/metricer/libcuda-metricer.so ${EXECUTABLE} ${ARGS} &> ${OUTPUT_REDIRECT}
 else
     error_hint "Invalid tool name."

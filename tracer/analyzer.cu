@@ -104,7 +104,14 @@ YosemiteResult yosemite_memset_callback() {
 
 YosemiteResult yosemite_kernel_start_callback(std::string kernel_name, uint64_t grid_id) {
     if (!first_kernel_finished) {
-        trace_folder_name = "traces_" + getCurrentDateTime();
+        const char* env_trace_folder_name = std::getenv("TRACES_FOLDER_NAME");
+        if (env_trace_folder_name != nullptr) {
+            fprintf(stdout, "TRACES_FOLDER_NAME: %s\n", env_trace_folder_name);
+            trace_folder_name = std::string(env_trace_folder_name) + "_" + getCurrentDateTime();
+        } else {
+            fprintf(stdout, "No trace_folder_name specified.\n");
+            trace_folder_name = "traces_" + getCurrentDateTime();
+        }
         checkFolderExistance(trace_folder_name);
         first_kernel_finished = true;
     } else {

@@ -76,14 +76,16 @@ else
     export OUTPUT_REDIRECT=/dev/null
 fi
 
-echo "${EXECUTABLE} profiling "
+echo "${EXECUTABLE} ${ARGS}"
 # Profile the application
 if [ ${TOOL} == "tracer" ]
 then
-LD_PRELOAD=${CUDA_PROF_HOME}/tracer/libcuda-tracer.so ${EXECUTABLE} ${ARGS} &> ${OUTPUT_REDIRECT}
+    echo "Tracing memory access of CUDA kernels."
+    LD_PRELOAD=${CUDA_PROF_HOME}/tracer/libcuda-tracer.so ${EXECUTABLE} ${ARGS} &> ${OUTPUT_REDIRECT}
 elif [ ${TOOL} == "metricer" ]
 then
-LD_PRELOAD=${CUDA_PROF_HOME}/metricer/libcuda-metricer.so ${EXECUTABLE} ${ARGS} &> ${OUTPUT_REDIRECT}
+    echo "Collecting metrics for CUDA kernels."
+    LD_PRELOAD=${CUDA_PROF_HOME}/metricer/libcuda-metricer.so ${EXECUTABLE} ${ARGS} &> ${OUTPUT_REDIRECT}
 else
     error_hint "Invalid tool name."
 fi

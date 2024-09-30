@@ -79,7 +79,7 @@ fi
 
 if [ ${EXECUTABLE} == "python" ] || [ ${EXECUTABLE} == "python3" ];
 then
-    export APP_NAME=$(basename ${ARGS[0]} .py)
+    export APP_NAME=$(basename $(echo $ARGS | cut -d' ' -f1) .py)
 else
     export APP_NAME=${EXECUTABLE#./}
 fi

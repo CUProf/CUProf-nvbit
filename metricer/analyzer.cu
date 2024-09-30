@@ -8,13 +8,6 @@
 
 using namespace yosemite;
 
-std::map<uint64_t, KernelEvent_t> kernel_events;
-std::map<uint64_t, AllocEvent_t> alloc_events;
-
-std::map<DevPtr, AllocEvent_t> active_memories;
-
-static uint64_t _timer = 0;
-
 typedef struct Stats{
     uint64_t num_allocs;
     uint64_t num_kernels;
@@ -32,6 +25,15 @@ typedef struct Stats{
 
 static Stats_t _stats;
 
+static uint64_t _timer = 0;
+
+std::map<uint64_t, KernelEvent_t> kernel_events;
+std::map<uint64_t, AllocEvent_t> alloc_events;
+std::map<DevPtr, AllocEvent_t> active_memories;
+
+std::map<std::string, uint32_t> kernel_invocations;
+
+
 YosemiteResult yosemite_alloc_callback(DevPtr ptr, size_t size, int type) {
     AllocEvent_t event;
     event.addr = ptr;
@@ -47,6 +49,7 @@ YosemiteResult yosemite_alloc_callback(DevPtr ptr, size_t size, int type) {
     return YOSEMITE_SUCCESS;
 }
 
+
 YosemiteResult yosemite_free_callback(DevPtr ptr) {
     auto it = active_memories.find(ptr);
     if (it == active_memories.end()) {
@@ -59,23 +62,33 @@ YosemiteResult yosemite_free_callback(DevPtr ptr) {
     return YOSEMITE_SUCCESS;
 }
 
+
 YosemiteResult yosemite_memcpy_callback() {
     return YOSEMITE_SUCCESS;
 }
 
+
 YosemiteResult yosemite_memset_callback() {
     return YOSEMITE_SUCCESS;
 }
+
 
 YosemiteResult yosemite_kernel_start_callback(std::string kernel_name) {
     KernelEvent_t event;
     event.kernel_name = kernel_name;
     kernel_events.emplace(_timer, event);
 
+    if (kernel_invocations.find(kernel_name) == kernel_invocations.end()) {
+        kernel_invocations.emplace(kernel_name, 1);
+    } else {
+        kernel_invocations[kernel_name]++;
+    }
+
     _stats.num_kernels++;
     _timer++;
     return YOSEMITE_SUCCESS;
 }
+
 
 YosemiteResult yosemite_kernel_end_callback(uint64_t mem_accesses) {
     KernelEvent_t& event = std::prev(kernel_events.end())->second;
@@ -83,6 +96,7 @@ YosemiteResult yosemite_kernel_end_callback(uint64_t mem_accesses) {
 
     return YOSEMITE_SUCCESS;
 }
+
 
 YosemiteResult yosemite_dump_stats() {
     const char* env_filename = std::getenv("METRICS_FILE_NAME");
@@ -116,8 +130,12 @@ YosemiteResult yosemite_dump_stats() {
     }
     out << std::endl;
 
-    _stats.avg_mem_accesses = _stats.tot_mem_accesses / _stats.num_kernels;
+    for (auto kernel : kernel_invocations) {
+        out << "InvCount: " << kernel.second << "\t" << kernel.first << std::endl;
+    }
+    out << std::endl;
 
+    _stats.avg_mem_accesses = _stats.tot_mem_accesses / _stats.num_kernels;
     out << "Number of allocations: " << _stats.num_allocs << std::endl;
     out << "Number of kernels: " << _stats.num_kernels << std::endl;
     out << "Maximum memory usage: " << _stats.max_mem_usage << "B (" << format_size(_stats.max_mem_usage) << ")" << std::endl;

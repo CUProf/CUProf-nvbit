@@ -269,8 +269,8 @@ void nvbit_at_cuda_event(CUcontext ctx, int is_exit, nvbit_api_cuda_t cbid,
                 cuLaunchKernelEx_params* p = (cuLaunchKernelEx_params*)params;
                 printf(
                     "LAUNCH KERNEL: %s - grid launch id %ld\n"
-                    "- grid size (%d,%d,%d) - block size (%d,%d,%d) - nregs %d - shmem %d\n"
-                    "- CTX 0x%016lx - stream id %ld - Kernel pc 0x%016lx\n",
+                    " - grid size (%d,%d,%d) - block size (%d,%d,%d) - nregs %d - shmem %d\n"
+                    " - CTX 0x%016lx - stream id %ld - Kernel pc 0x%016lx\n",
                     func_name, grid_launch_id, 
                     p->config->gridDimX, p->config->gridDimY, p->config->gridDimZ,
                     p->config->blockDimX, p->config->blockDimY, p->config->blockDimZ,
@@ -280,8 +280,8 @@ void nvbit_at_cuda_event(CUcontext ctx, int is_exit, nvbit_api_cuda_t cbid,
                 cuLaunchKernel_params* p = (cuLaunchKernel_params*)params;
                 printf(
                     "LAUNCH KERNEL: %s - grid launch id %ld\n"
-                    "- grid size (%d,%d,%d) - block size (%d,%d,%d) - nregs %d - shmem %d\n"
-                    "- CTX 0x%016lx - stream id %ld - Kernel pc 0x%016lx\n",
+                    " - grid size (%d,%d,%d) - block size (%d,%d,%d) - nregs %d - shmem %d\n"
+                    " - CTX 0x%016lx - stream id %ld - Kernel pc 0x%016lx\n",
                     func_name, grid_launch_id, 
                     p->gridDimX, p->gridDimY, p->gridDimZ,
                     p->blockDimX, p->blockDimY, p->blockDimZ,
@@ -315,14 +315,14 @@ void nvbit_at_cuda_event(CUcontext ctx, int is_exit, nvbit_api_cuda_t cbid,
             pthread_mutex_unlock(&cuda_event_mutex);
             return;
         }
-        printf("ALLOC EVENT: %s\n", name);
+        printf("ALLOC EVENT: %s - ", name);
         if (cbid == API_CUDA_cuMemAlloc) {
             cuMemAlloc_params* p = (cuMemAlloc_params*)params;
             printf("ptr %p, size %u\n", p->dptr, p->bytesize);
         } else if (cbid == API_CUDA_cuMemAlloc_v2) {    // cudaMalloc
             cuMemAlloc_v2_params* p = (cuMemAlloc_v2_params*)params;
+            printf("ptr %llu, size %lu\n", *((unsigned long long*)p->dptr), p->bytesize);
             yosemite_alloc_callback(*(p->dptr), p->bytesize);
-            // printf("ptr %llu, size %lu\n", *((unsigned long long*)p->dptr), p->bytesize);
         } else if (cbid == API_CUDA_cuMemAllocManaged) {    // cudaMallocManaged
             cuMemAllocManaged_params* p = (cuMemAllocManaged_params*)params;
             printf("ptr %p, flag %d, size %ld\n", p->dptr, p->flags, p->bytesize);
@@ -351,14 +351,14 @@ void nvbit_at_cuda_event(CUcontext ctx, int is_exit, nvbit_api_cuda_t cbid,
             return;
         }
 
-        printf("FREE EVENT: %s\n", name);
+        printf("FREE EVENT: %s - ", name);
         if (cbid == API_CUDA_cuMemFree) {
             cuMemFree_params* p = (cuMemFree_params*)params;
             printf("ptr %u\n", p->dptr);
         } else if (cbid == API_CUDA_cuMemFree_v2) {   // cudaFree
             cuMemFree_v2_params* p = (cuMemFree_v2_params*)params;
+            printf("v2 ptr %llu\n", p->dptr);
             yosemite_free_callback(p->dptr);
-            // printf("v2 ptr %llu\n", p->dptr);
         } else if (cbid == API_CUDA_cuMemFreeHost) {
             cuMemFreeHost_params* p = (cuMemFreeHost_params*)params;
             printf("ptr %p\n", p->p);

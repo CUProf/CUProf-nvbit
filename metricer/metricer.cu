@@ -19,7 +19,7 @@ uint32_t kernel_id = 0;
 
 /* total instruction counter, maintained in system memory, incremented by
  * "counter" every time a kernel completes  */
-uint64_t tot_app_instrs = 0;
+uint64_t tot_app_mem_refs = 0;
 
 /* kernel instruction counter, updated by the GPU threads */
 __managed__ uint64_t counter = 0;
@@ -126,20 +126,18 @@ void instrument_function_if_needed(CUcontext ctx, CUfunction func) {
 
         /* Iterate on basic block and inject the first instruction */
         for (auto &bb : cfg.bbs) {
-
-            uint32_t mem_instrs = 0;
+            uint32_t mem_refs = 0;
             for (auto i : bb->instrs) {
                 if (i->getMemorySpace() == InstrType::MemorySpace::GLOBAL) {
-                    mem_instrs++;
+                    mem_refs++;
                 }
             }
 
             Instr *i = bb->instrs[0];
             /* inject device function */
-            nvbit_insert_call(i, "count_mem_instrs", IPOINT_BEFORE);
-            /* add size of basic block in number of instruction */
-            // nvbit_add_call_arg_const_val32(i, bb->instrs.size());
-            nvbit_add_call_arg_const_val32(i, mem_instrs);
+            nvbit_insert_call(i, "count_mem_access", IPOINT_BEFORE);
+            /* add size of basic block in number of mem refs */
+            nvbit_add_call_arg_const_val32(i, mem_refs);
             /* add count warp level option */
             nvbit_add_call_arg_const_val32(i, count_warp_level);
             /* add pointer to counter location */
@@ -165,7 +163,7 @@ void instrument_function_if_needed(CUcontext ctx, CUfunction func) {
                     nvbit_add_call_arg_const_val64(i,
                                                    (uint64_t)&counter_pred_off);
                     if (verbose) {
-                        i->print("Inject count_instr before - ");
+                        i->print("Inject count func before - ");
                     }
                 }
             }
@@ -236,8 +234,8 @@ void nvbit_at_cuda_event(CUcontext ctx, int is_exit, nvbit_api_cuda_t cbid,
                 cuLaunchKernelEx_params* p = (cuLaunchKernelEx_params*)params;
                 printf(
                     "LAUNCH KERNEL: %s\n"
-                    "- grid size (%d,%d,%d) - block size (%d,%d,%d)\n"
-                    "- CTX 0x%016lx - stream id %ld - Kernel pc 0x%016lx\n",
+                    " - grid size (%d,%d,%d) - block size (%d,%d,%d)"
+                    " - CTX 0x%016lx - stream id %ld - Kernel pc 0x%016lx\n",
                     func_name,
                     p->config->gridDimX, p->config->gridDimY, p->config->gridDimZ,
                     p->config->blockDimX, p->config->blockDimY, p->config->blockDimZ,
@@ -246,8 +244,8 @@ void nvbit_at_cuda_event(CUcontext ctx, int is_exit, nvbit_api_cuda_t cbid,
                 cuLaunchKernel_params* p = (cuLaunchKernel_params*)params;
                 printf(
                     "LAUNCH KERNEL: %s\n"
-                    "- grid size (%d,%d,%d) - block size (%d,%d,%d)\n"
-                    "- CTX 0x%016lx - stream id %ld - Kernel pc 0x%016lx\n",
+                    " - grid size (%d,%d,%d) - block size (%d,%d,%d)"
+                    " - CTX 0x%016lx - stream id %ld - Kernel pc 0x%016lx\n",
                     func_name,
                     p->gridDimX, p->gridDimY, p->gridDimZ,
                     p->blockDimX, p->blockDimY, p->blockDimZ,
@@ -264,8 +262,8 @@ void nvbit_at_cuda_event(CUcontext ctx, int is_exit, nvbit_api_cuda_t cbid,
              * 3. Print the thread instruction counters
              * 4. Release the lock*/
             CUDA_SAFECALL(cudaDeviceSynchronize());
-            uint64_t kernel_instrs = counter - counter_pred_off;
-            tot_app_instrs += kernel_instrs;
+            uint64_t kernel_refs = counter - counter_pred_off;
+            tot_app_mem_refs += kernel_refs;
             int num_ctas = 0;
             if (cbid == API_CUDA_cuLaunchKernel_ptsz ||
                 cbid == API_CUDA_cuLaunchKernel) {
@@ -281,9 +279,9 @@ void nvbit_at_cuda_event(CUcontext ctx, int is_exit, nvbit_api_cuda_t cbid,
                 "kernel %d - %s - #thread-blocks %d,  kernel "
                 "memory accesses %ld, total memory accesses %ld\n",
                 kernel_id++, nvbit_get_func_name(ctx, func, mangled), num_ctas,
-                kernel_instrs, tot_app_instrs);
+                kernel_refs, tot_app_mem_refs);
 
-            yosemite_kernel_end_callback(kernel_instrs);
+            yosemite_kernel_end_callback(kernel_refs);
             pthread_mutex_unlock(&mutex);
         }
     } else if (cbid == API_CUDA_cuProfilerStart && is_exit) {
@@ -305,34 +303,34 @@ void nvbit_at_cuda_event(CUcontext ctx, int is_exit, nvbit_api_cuda_t cbid,
         if (!is_exit) {
             return;
         }
-        printf("ALLOC EVENT: %s\n", name);
+        printf("ALLOC EVENT: %s - ", name);
         if (cbid == API_CUDA_cuMemAlloc) {
             cuMemAlloc_params* p = (cuMemAlloc_params*)params;
+            printf("ptr %p, size %u\n", p->dptr, p->bytesize);
             yosemite_alloc_callback((CUdeviceptr)p->dptr, p->bytesize, API_CUDA_cuMemAlloc);
-            // printf("ptr %p, size %u\n", p->dptr, p->bytesize);
         } else if (cbid == API_CUDA_cuMemAlloc_v2) {    // cudaMalloc
             cuMemAlloc_v2_params* p = (cuMemAlloc_v2_params*)params;
+            printf("ptr %llu, size %lu\n", *((unsigned long long*)p->dptr), p->bytesize);
             yosemite_alloc_callback(*(p->dptr), p->bytesize, API_CUDA_cuMemAlloc_v2);
-            // printf("ptr %llu, size %lu\n", *((unsigned long long*)p->dptr), p->bytesize);
         } else if (cbid == API_CUDA_cuMemAllocManaged) {    // cudaMallocManaged
             cuMemAllocManaged_params* p = (cuMemAllocManaged_params*)params;
+            printf("ptr %p, flag %d, size %ld\n", p->dptr, p->flags, p->bytesize);
             yosemite_alloc_callback(*(p->dptr), p->bytesize, API_CUDA_cuMemAllocManaged);
-            // printf("ptr %p, flag %d, size %ld\n", p->dptr, p->flags, p->bytesize);
         } else if (cbid == API_CUDA_cuMemHostAlloc || cbid == API_CUDA_cuMemHostAlloc_v2) {
             cuMemHostAlloc_params* p = (cuMemHostAlloc_params*)params;
             printf("ptr %p, flag %d, size %ld\n", p->pp, p->Flags, p->bytesize);
         } else if (cbid == API_CUDA_cuMemAllocAsync) {
             cuMemAllocAsync_params* p = (cuMemAllocAsync_params*)params;
+            printf("ptr %p, size %ld\n", p->dptr, p->bytesize);
             yosemite_alloc_callback(*(p->dptr), p->bytesize, API_CUDA_cuMemAllocAsync);
-            // printf("ptr %p, size %ld\n", p->dptr, p->bytesize);
         } else if (cbid == API_CUDA_cuMemAllocHost) {
             cuMemAllocHost_params* p = (cuMemAllocHost_params*)params;
+            printf("ptr %p, size %u\n", p->pp, p->bytesize);
             yosemite_alloc_callback((CUdeviceptr)p->pp, p->bytesize, API_CUDA_cuMemAllocHost);
-            // printf("ptr %p, size %u\n", p->pp, p->bytesize);
         } else if (cbid == API_CUDA_cuMemAllocHost_v2) {
             cuMemAllocHost_v2_params* p = (cuMemAllocHost_v2_params*)params;
+            printf("ptr %p, size %ld\n", p->pp, p->bytesize);
             yosemite_alloc_callback((CUdeviceptr)p->pp, p->bytesize, API_CUDA_cuMemAllocHost_v2);
-            // printf("ptr %p, size %ld\n", p->pp, p->bytesize);
         } else {
             printf("Not supported\n");
         }
@@ -344,23 +342,23 @@ void nvbit_at_cuda_event(CUcontext ctx, int is_exit, nvbit_api_cuda_t cbid,
             return;
         }
 
-        printf("FREE EVENT: %s\n", name);
+        printf("FREE EVENT: %s - ", name);
         if (cbid == API_CUDA_cuMemFree) {
             cuMemFree_params* p = (cuMemFree_params*)params;
+            printf("ptr %u\n", p->dptr);
             yosemite_free_callback(p->dptr);
-            // printf("ptr %u\n", p->dptr);
         } else if (cbid == API_CUDA_cuMemFree_v2) {   // cudaFree
             cuMemFree_v2_params* p = (cuMemFree_v2_params*)params;
+            printf("v2 ptr %llu\n", p->dptr);
             yosemite_free_callback(p->dptr);
-            // printf("v2 ptr %llu\n", p->dptr);
         } else if (cbid == API_CUDA_cuMemFreeHost) {
             cuMemFreeHost_params* p = (cuMemFreeHost_params*)params;
+            printf("ptr %p\n", p->p);
             yosemite_free_callback((CUdeviceptr)p->p);
-            // printf("ptr %p\n", p->p);
         } else if (cbid == API_CUDA_cuMemFreeAsync) {
             cuMemFreeAsync_params* p = (cuMemFreeAsync_params*)params;
+            printf("ptr %llu\n", p->dptr);
             yosemite_free_callback(p->dptr);
-            // printf("ptr %llu\n", p->dptr);
         } else {
             printf("Not supported\n");
         }
@@ -369,5 +367,4 @@ void nvbit_at_cuda_event(CUcontext ctx, int is_exit, nvbit_api_cuda_t cbid,
 
 void nvbit_at_term() {
     yosemite_dump_stats();
-    printf("Total app memory accesses: %ld\n", tot_app_instrs);
 }

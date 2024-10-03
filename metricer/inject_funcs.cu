@@ -3,7 +3,7 @@
 
 #include "utils/utils.h"
 
-extern "C" __device__ __noinline__ void count_mem_instrs(int num_instrs,
+extern "C" __device__ __noinline__ void count_mem_access(int num_instrs,
                                                      int count_warp_level,
                                                      uint64_t pcounter) {
     /* all the active threads will compute the active mask */

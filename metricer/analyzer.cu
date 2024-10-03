@@ -1,4 +1,5 @@
 #include <map>
+#include <string>
 #include <fstream>
 #include <cstdlib>
 
@@ -103,24 +104,25 @@ YosemiteResult yosemite_dump_stats() {
     std::string filename;
     if (env_filename) {
         fprintf(stdout, "METRICS_FILE_NAME: %s\n", env_filename);
-        filename = std::string(env_filename) + "_" + getCurrentDateTime() + ".txt";
+        filename = std::string(env_filename) + "_" + getCurrentDateTime();
     } else {
-        filename = "metrics_" + getCurrentDateTime() + ".txt";
+        filename = "metrics_" + getCurrentDateTime();
         fprintf(stdout, "No filename specified. Using default filename: %s\n", filename.c_str());
     }
+    filename += ".log";
     printf("Dumping traces to %s\n", filename.c_str());
 
     std::ofstream out(filename);
     int count = 0;
     for (auto event : alloc_events) {
-        out << "Alloc_" << count << ": " << event.second.addr << " " << event.second.size << " " << event.second.alloc_type << std::endl;
+        out << "Alloc " << count << ":\t" << event.second.addr << " " << event.second.size << " " << event.second.alloc_type << std::endl;
         count++;
     }
     out << std::endl;
 
     count = 0;
     for (auto event : kernel_events) {
-        out << "Kernel_" << count << ": " << event.second.kernel_name << " " << event.second.mem_accesses << std::endl;
+        out << "Kernel " << count << " (refs=" << event.second.mem_accesses << "):\t" << event.second.kernel_name << std::endl;
         _stats.tot_mem_accesses += event.second.mem_accesses;
         if (_stats.max_mem_accesses_per_kernel < event.second.mem_accesses) {
             _stats.max_mem_accesses_kernel = event.second.kernel_name;
@@ -131,7 +133,7 @@ YosemiteResult yosemite_dump_stats() {
     out << std::endl;
 
     for (auto kernel : kernel_invocations) {
-        out << "InvCount: " << kernel.second << "\t" << kernel.first << std::endl;
+        out << "InvCount=" << kernel.second << "\t" << kernel.first << std::endl;
     }
     out << std::endl;
 

@@ -1,7 +1,9 @@
 #include <map>
+#include <vector>
 #include <string>
 #include <fstream>
 #include <cstdlib>
+#include <algorithm>
 
 #include "analyzer.h"
 #include "analyzer_utils.h"
@@ -132,7 +134,12 @@ YosemiteResult yosemite_dump_stats() {
     }
     out << std::endl;
 
-    for (auto kernel : kernel_invocations) {
+    // sort kernel_invocations by number of invocations in descending order
+    std::vector<std::pair<std::string, uint32_t>> sorted_kernel_invocations(kernel_invocations.begin(), kernel_invocations.end());
+    std::sort(sorted_kernel_invocations.begin(), sorted_kernel_invocations.end(), [](const std::pair<std::string, uint32_t>& a, const std::pair<std::string, uint32_t>& b) {
+        return a.second > b.second;
+    });
+    for (auto kernel : sorted_kernel_invocations) {
         out << "InvCount=" << kernel.second << "\t" << kernel.first << std::endl;
     }
     out << std::endl;

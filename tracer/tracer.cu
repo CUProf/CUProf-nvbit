@@ -276,6 +276,7 @@ void nvbit_at_cuda_event(CUcontext ctx, int is_exit, nvbit_api_cuda_t cbid,
                     p->config->blockDimX, p->config->blockDimY, p->config->blockDimZ,
                     nregs, shmem_static_nbytes + p->config->sharedMemBytes,
                     (uint64_t)ctx, (uint64_t)p->config->hStream, pc);
+                fflush(stdout);
             } else {
                 cuLaunchKernel_params* p = (cuLaunchKernel_params*)params;
                 printf(
@@ -287,6 +288,7 @@ void nvbit_at_cuda_event(CUcontext ctx, int is_exit, nvbit_api_cuda_t cbid,
                     p->blockDimX, p->blockDimY, p->blockDimZ,
                     nregs, shmem_static_nbytes + p->sharedMemBytes,
                     (uint64_t)ctx, (uint64_t)p->hStream, pc);
+                fflush(stdout);
             }
 
         } else {
@@ -341,6 +343,7 @@ void nvbit_at_cuda_event(CUcontext ctx, int is_exit, nvbit_api_cuda_t cbid,
         } else {
             printf("Not supported\n");
         }
+        fflush(stdout);
     } else if (cbid == API_CUDA_cuMemFree ||
                cbid == API_CUDA_cuMemFree_v2 ||
                cbid == API_CUDA_cuMemFreeHost ||
@@ -368,6 +371,7 @@ void nvbit_at_cuda_event(CUcontext ctx, int is_exit, nvbit_api_cuda_t cbid,
         } else {
             printf("Not supported\n");
         }
+        fflush(stdout);
     }
 
     skip_callback_flag = false;

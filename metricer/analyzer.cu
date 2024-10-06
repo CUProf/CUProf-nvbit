@@ -117,7 +117,7 @@ YosemiteResult yosemite_dump_stats() {
     std::ofstream out(filename);
     int count = 0;
     for (auto event : alloc_events) {
-        out << "Alloc " << count << ":\t" << event.second.addr << " " << event.second.size << " " << event.second.alloc_type << std::endl;
+        out << "Alloc(" << event.second.alloc_type << ") " << count << ":\t" << event.second.addr << " " << event.second.size << " (" << format_size(event.second.size) << ")" << std::endl;
         count++;
     }
     out << std::endl;

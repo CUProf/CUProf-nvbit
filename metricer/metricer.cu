@@ -240,6 +240,7 @@ void nvbit_at_cuda_event(CUcontext ctx, int is_exit, nvbit_api_cuda_t cbid,
                     p->config->gridDimX, p->config->gridDimY, p->config->gridDimZ,
                     p->config->blockDimX, p->config->blockDimY, p->config->blockDimZ,
                     (uint64_t)ctx, (uint64_t)p->config->hStream, pc);
+                fflush(stdout);
             } else {
                 cuLaunchKernel_params* p = (cuLaunchKernel_params*)params;
                 printf(
@@ -250,6 +251,7 @@ void nvbit_at_cuda_event(CUcontext ctx, int is_exit, nvbit_api_cuda_t cbid,
                     p->gridDimX, p->gridDimY, p->gridDimZ,
                     p->blockDimX, p->blockDimY, p->blockDimZ,
                     (uint64_t)ctx, (uint64_t)p->hStream, pc);
+                fflush(stdout);
             }
 
             counter = 0;
@@ -280,6 +282,7 @@ void nvbit_at_cuda_event(CUcontext ctx, int is_exit, nvbit_api_cuda_t cbid,
                 "memory accesses %ld, total memory accesses %ld\n",
                 kernel_id++, nvbit_get_func_name(ctx, func, mangled), num_ctas,
                 kernel_refs, tot_app_mem_refs);
+            fflush(stdout);
 
             yosemite_kernel_end_callback(kernel_refs);
             pthread_mutex_unlock(&mutex);
@@ -334,6 +337,7 @@ void nvbit_at_cuda_event(CUcontext ctx, int is_exit, nvbit_api_cuda_t cbid,
         } else {
             printf("Not supported\n");
         }
+        fflush(stdout);
     } else if (cbid == API_CUDA_cuMemFree ||
                cbid == API_CUDA_cuMemFree_v2 ||
                cbid == API_CUDA_cuMemFreeHost ||
@@ -362,6 +366,7 @@ void nvbit_at_cuda_event(CUcontext ctx, int is_exit, nvbit_api_cuda_t cbid,
         } else {
             printf("Not supported\n");
         }
+        fflush(stdout);
     }
 }
 

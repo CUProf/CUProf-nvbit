@@ -321,25 +321,30 @@ void nvbit_at_cuda_event(CUcontext ctx, int is_exit, nvbit_api_cuda_t cbid,
         if (cbid == API_CUDA_cuMemAlloc) {
             cuMemAlloc_params* p = (cuMemAlloc_params*)params;
             printf("ptr %p, size %u\n", p->dptr, p->bytesize);
+            yosemite_alloc_callback((CUdeviceptr)p->dptr, p->bytesize, API_CUDA_cuMemAlloc);
         } else if (cbid == API_CUDA_cuMemAlloc_v2) {    // cudaMalloc
             cuMemAlloc_v2_params* p = (cuMemAlloc_v2_params*)params;
             printf("ptr %llu, size %lu\n", *((unsigned long long*)p->dptr), p->bytesize);
-            yosemite_alloc_callback(*(p->dptr), p->bytesize);
+            yosemite_alloc_callback(*(p->dptr), p->bytesize, API_CUDA_cuMemAlloc_v2);
         } else if (cbid == API_CUDA_cuMemAllocManaged) {    // cudaMallocManaged
             cuMemAllocManaged_params* p = (cuMemAllocManaged_params*)params;
             printf("ptr %p, flag %d, size %ld\n", p->dptr, p->flags, p->bytesize);
+            yosemite_alloc_callback(*(p->dptr), p->bytesize, API_CUDA_cuMemAllocManaged);
         } else if (cbid == API_CUDA_cuMemHostAlloc || cbid == API_CUDA_cuMemHostAlloc_v2) {
             cuMemHostAlloc_params* p = (cuMemHostAlloc_params*)params;
             printf("ptr %p, flag %d, size %ld\n", p->pp, p->Flags, p->bytesize);
         } else if (cbid == API_CUDA_cuMemAllocAsync) {
             cuMemAllocAsync_params* p = (cuMemAllocAsync_params*)params;
             printf("ptr %p, size %ld\n", p->dptr, p->bytesize);
+            yosemite_alloc_callback(*(p->dptr), p->bytesize, API_CUDA_cuMemAllocAsync);
         } else if (cbid == API_CUDA_cuMemAllocHost) {
             cuMemAllocHost_params* p = (cuMemAllocHost_params*)params;
             printf("ptr %p, size %u\n", p->pp, p->bytesize);
+            yosemite_alloc_callback((CUdeviceptr)p->pp, p->bytesize, API_CUDA_cuMemAllocHost);
         } else if (cbid == API_CUDA_cuMemAllocHost_v2) {
             cuMemAllocHost_v2_params* p = (cuMemAllocHost_v2_params*)params;
             printf("ptr %p, size %ld\n", p->pp, p->bytesize);
+            yosemite_alloc_callback((CUdeviceptr)p->pp, p->bytesize, API_CUDA_cuMemAllocHost_v2);
         } else {
             printf("Not supported\n");
         }
@@ -358,6 +363,7 @@ void nvbit_at_cuda_event(CUcontext ctx, int is_exit, nvbit_api_cuda_t cbid,
         if (cbid == API_CUDA_cuMemFree) {
             cuMemFree_params* p = (cuMemFree_params*)params;
             printf("ptr %u\n", p->dptr);
+            yosemite_free_callback(p->dptr);
         } else if (cbid == API_CUDA_cuMemFree_v2) {   // cudaFree
             cuMemFree_v2_params* p = (cuMemFree_v2_params*)params;
             printf("v2 ptr %llu\n", p->dptr);
@@ -365,9 +371,11 @@ void nvbit_at_cuda_event(CUcontext ctx, int is_exit, nvbit_api_cuda_t cbid,
         } else if (cbid == API_CUDA_cuMemFreeHost) {
             cuMemFreeHost_params* p = (cuMemFreeHost_params*)params;
             printf("ptr %p\n", p->p);
+            yosemite_free_callback((CUdeviceptr)p->p);
         } else if (cbid == API_CUDA_cuMemFreeAsync) {
             cuMemFreeAsync_params* p = (cuMemFreeAsync_params*)params;
             printf("ptr %llu\n", p->dptr);
+            yosemite_free_callback(p->dptr);
         } else {
             printf("Not supported\n");
         }

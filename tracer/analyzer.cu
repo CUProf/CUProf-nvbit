@@ -65,12 +65,15 @@ std::map<DevPtr, AllocEvent_t> active_memories;
 std::list<TraceEntry> _traces;
 
 
-YosemiteResult yosemite_alloc_callback(DevPtr ptr, size_t size) {
+YosemiteResult dump_kernel_trace(KernelEvent_t event);
+
+
+YosemiteResult yosemite_alloc_callback(DevPtr ptr, size_t size, int type) {
     AllocEvent_t event;
     event.timestamp = _timer.get();
     event.addr = ptr;
     event.size = size;
-    event.alloc_type = 1;
+    event.alloc_type = type;
     alloc_events.emplace(_timer.get(), event);
     active_memories.emplace(ptr, event);
 
@@ -134,7 +137,7 @@ YosemiteResult yosemite_kernel_end_callback() {
     KernelEvent_t& event = std::prev(kernel_events.end())->second;
     event.end_time = _timer.get();
 
-    yosemite_dump_traces(event.grid_id);
+    dump_kernel_trace(event);
 
     _timer.increment(true);
     return YOSEMITE_SUCCESS;
@@ -162,8 +165,8 @@ YosemiteResult yosemite_memory_trace_analysis(mem_access_t* ma) {
 }
 
 
-YosemiteResult yosemite_dump_traces(uint64_t grid_id) {
-    std::string filename = trace_folder_name + "/kernel_" + std::to_string(grid_id) + ".txt";
+YosemiteResult dump_kernel_trace(KernelEvent_t event) {
+    std::string filename = trace_folder_name + "/kernel_" + std::to_string(event.grid_id) + ".txt";
     printf("Dumping traces to %s\n", filename.c_str());
 
     std::ofstream out(filename);
@@ -178,13 +181,11 @@ YosemiteResult yosemite_dump_traces(uint64_t grid_id) {
             << std::endl;
     }
 
-    for (auto event : active_memories) {
-        out << "ALLOCATION: " << " " << event.second.addr << " " << event.second.size << std::endl;
+    for (auto m : alloc_events) {
+        out << "ALLOCATION: " << " " << m.second.addr << " " << m.second.size << std::endl;
     }
 
-    for (auto event : kernel_events) {
-        out << "KERNEL: " << event.second.timestamp << " " << event.second.end_time << std::endl;
-    }
+    out << "KERNEL: " << event.timestamp << " " << event.end_time << std::endl;
 
     out.close();
     return YOSEMITE_SUCCESS;

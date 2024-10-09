@@ -9,7 +9,7 @@ typedef enum {
 
 typedef unsigned long long DevPtr;
 
-YosemiteResult yosemite_alloc_callback(DevPtr ptr, size_t size);
+YosemiteResult yosemite_alloc_callback(DevPtr ptr, size_t size, int type);
 
 YosemiteResult yosemite_free_callback(DevPtr ptr);
 
@@ -22,5 +22,3 @@ YosemiteResult yosemite_kernel_start_callback(std::string kernel_name, uint64_t 
 YosemiteResult yosemite_kernel_end_callback();
 
 YosemiteResult yosemite_memory_trace_analysis(mem_access_t* ma);
-
-YosemiteResult yosemite_dump_traces(uint64_t grid_id);

@@ -1,3 +1,6 @@
+PROJECT := CUProf
+
+CXX ?=
 NVCC=nvcc -ccbin=$(CXX) -D_FORCE_INLINES
 PTXAS=ptxas
 
@@ -19,32 +22,55 @@ else
 MAXRREGCOUNT_FLAG=
 endif
 
-NVBIT_PATH=core
-INCLUDES=-I$(NVBIT_PATH)
+ifeq ($(DEBUG),1)
+DEBUG_FLAGS := -g -O0
+else
+DEBUG_FLAGS := -O3
+endif
+
+NVBIT_PATH=core/
+INCLUDES=-I$(NVBIT_PATH) -Iinclude/
 
 LIBS=-L$(NVBIT_PATH) -lnvbit
 NVCC_PATH=-L $(subst bin/nvcc,lib64,$(shell which nvcc | tr -s /))
 
-SOURCES=$(wildcard *.cu)
+SRC_DIR := src/
+OBJ_DIR := obj/
+LIB_DIR := lib/
 
-OBJECTS=$(SOURCES:.cu=.o)
-ARCH?=all
+CPP_SRCS := $(notdir $(wildcard $(SRC_DIR)*.cpp $(SRC_DIR)*/*.cpp))
+CU_SRCS := $(notdir $(wildcard $(SRC_DIR)*.cu $(SRC_DIR)*/*.cu))
+OBJS := $(addprefix $(OBJ_DIR), $(patsubst %.cpp, %.o, $(CPP_SRCS)))
+OBJS += $(addprefix $(OBJ_DIR), $(patsubst %.cu, %.o, $(CU_SRCS)))
 
-mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
-current_dir := $(notdir $(patsubst %/,%,$(dir $(mkfile_path))))
+ARCH ?= all
 
-NVBIT_TOOL=libcuda-$(current_dir).so
+NVBIT_TOOL = $(LIB_DIR)/libcuda-$(PROJECT).so
 
-all: $(NVBIT_TOOL)
+all: dirs $(NVBIT_TOOL)
 
-$(NVBIT_TOOL): $(OBJECTS) $(NVBIT_PATH)/libnvbit.a
-	$(NVCC) -arch=$(ARCH) -O3 $(OBJECTS) $(LIBS) $(NVCC_PATH) -lcuda -lcudart_static -shared -o $@
+dirs: $(OBJ_DIR) $(LIB_DIR)
 
-%.o: %.cu
-	$(NVCC) -dc -c -std=c++11 $(INCLUDES) -Xptxas -cloning=no -Xcompiler -Wall -arch=$(ARCH) -O3 -Xcompiler -fPIC $< -o $@
+$(OBJ_DIR):
+	mkdir -p $@
 
-inject_funcs.o: inject_funcs.cu
+$(LIB_DIR):
+	mkdir -p $@
+
+$(NVBIT_TOOL): $(OBJS) $(NVBIT_PATH)/libnvbit.a
+	$(NVCC) -arch=$(ARCH) $(DEBUG_FLAGS) $(OBJS) $(LIBS) $(NVCC_PATH) -lcuda -lcudart_static -shared -o $@
+
+$(OBJ_DIR)%.o: $(SRC_DIR)%.cpp
+	$(CXX) -std=c++11 $(INCLUDES) -Wall $(DEBUG_FLAGS) -fPIC -c $< -o $@
+
+$(OBJ_DIR)%.o: $(SRC_DIR)/*/%.cpp
+	$(CXX) -std=c++11 $(INCLUDES) -Wall $(DEBUG_FLAGS) -fPIC -c $< -o $@
+
+$(OBJ_DIR)%.o: $(SRC_DIR)/%.cu
+	$(NVCC) -dc -c -std=c++11 $(INCLUDES) -Xptxas -cloning=no -Xcompiler -Wall -arch=$(ARCH) $(DEBUG_FLAGS) -Xcompiler -fPIC $< -o $@
+
+$(OBJ_DIR)%.o:: $(SRC_DIR)/inj_fns/%.cu
 	$(NVCC) $(INCLUDES) $(MAXRREGCOUNT_FLAG) -Xptxas -astoolspatch --keep-device-functions -arch=$(ARCH) -Xcompiler -Wall -Xcompiler -fPIC -c $< -o $@
 
 clean:
-	rm -f *.so *.o
+	-rm -rf $(OBJ_DIR) $(LIB_DIR)

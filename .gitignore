@@ -2,4 +2,5 @@
 *.so
 
 .vscode/
-tmp/
+lib/
+obj/

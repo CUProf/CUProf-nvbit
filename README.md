@@ -1,3 +1,5 @@
+[![wakatime](https://wakatime.com/badge/github/Lin-Mao/DrGPUM.svg)](https://wakatime.com/badge/github/Lin-Mao/DrGPUM)
+
 # CUProf
 A collection of CUDA application profiler.
 
@@ -8,7 +10,7 @@ A collection of CUDA application profiler.
 
 ## Tools
 
-* `tracer`: Dump memory kernel-wise access traces of CUDA applications.
+* `mem_trace`: Dump memory kernel-wise access traces of CUDA applications.
 
 
-* `metricer`: Dump application information, such as memory reference counts, etc.
+* `app_metric`: Dump application information, such as memory reference counts, etc.

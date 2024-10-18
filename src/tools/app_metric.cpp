@@ -114,7 +114,8 @@ void AppMetrics::flush() {
         filename = std::string(env_filename) + "_" + get_current_date_n_time();
     } else {
         filename = "metrics_" + get_current_date_n_time();
-        fprintf(stdout, "No filename specified. Using default filename: %s\n", filename.c_str());
+        fprintf(stdout, "No filename specified. Using default filename: %s\n",
+                filename.c_str());
     }
     filename += ".log";
     printf("Dumping traces to %s\n", filename.c_str());
@@ -123,14 +124,17 @@ void AppMetrics::flush() {
 
     int count = 0;
     for (auto event : alloc_events) {
-        out << "Alloc(" << event.second->alloc_type << ") " << count << ":\t" << event.second->addr << " " << event.second->size << " (" << format_size(event.second->size) << ")" << std::endl;
+        out << "Alloc(" << event.second->alloc_type << ") " << count << ":\t"
+            << event.second->addr << " " << event.second->size
+            << " (" << format_size(event.second->size) << ")" << std::endl;
         count++;
     }
     out << std::endl;
 
     count = 0;
     for (auto event : kernel_events) {
-        out << "Kernel " << count << " (refs=" << event.second->mem_accesses << "):\t" << event.second->kernel_name << std::endl;
+        out << "Kernel " << count << " (refs=" << event.second->mem_accesses
+            << "):\t" << event.second->kernel_name << std::endl;
         _stats.tot_mem_accesses += event.second->mem_accesses;
         if (_stats.max_mem_accesses_per_kernel < event.second->mem_accesses) {
             _stats.max_mem_accesses_kernel = event.second->kernel_name;
@@ -141,8 +145,11 @@ void AppMetrics::flush() {
     out << std::endl;
 
     // sort kernel_invocations by number of invocations in descending order
-    std::vector<std::pair<std::string, uint32_t>> sorted_kernel_invocations(kernel_invocations.begin(), kernel_invocations.end());
-    std::sort(sorted_kernel_invocations.begin(), sorted_kernel_invocations.end(), [](const std::pair<std::string, uint32_t>& a, const std::pair<std::string, uint32_t>& b) {
+    std::vector<std::pair<std::string, uint32_t>> sorted_kernel_invocations(
+                        kernel_invocations.begin(), kernel_invocations.end());
+    std::sort(sorted_kernel_invocations.begin(), sorted_kernel_invocations.end(),
+                                [](const std::pair<std::string, uint32_t>& a,
+                                   const std::pair<std::string, uint32_t>& b) {
         return a.second > b.second;
     });
     for (auto kernel : sorted_kernel_invocations) {
@@ -153,10 +160,15 @@ void AppMetrics::flush() {
     _stats.avg_mem_accesses = _stats.tot_mem_accesses / _stats.num_kernels;
     out << "Number of allocations: " << _stats.num_allocs << std::endl;
     out << "Number of kernels: " << _stats.num_kernels << std::endl;
-    out << "Maximum memory usage: " << _stats.max_mem_usage << "B (" << format_size(_stats.max_mem_usage) << ")" << std::endl;
-    out << "Maximum memory accesses kernel: " << _stats.max_mem_accesses_kernel << std::endl;
-    out << "Maximum memory accesses per kernel: " << _stats.max_mem_accesses_per_kernel << " (" << format_number(_stats.max_mem_accesses_per_kernel) << ")" << std::endl;
-    out << "Average memory accesses per kernel: " << _stats.avg_mem_accesses << " (" << format_number(_stats.avg_mem_accesses) << ")"  << std::endl;
-    out << "Total memory accesses: " << _stats.tot_mem_accesses << " (" << format_number(_stats.tot_mem_accesses) << ")"  << std::endl;
+    out << "Maximum memory usage: " << _stats.max_mem_usage
+        << "B (" << format_size(_stats.max_mem_usage) << ")" << std::endl;
+    out << "Maximum memory accesses kernel: " << _stats.max_mem_accesses_kernel
+        << std::endl;
+    out << "Maximum memory accesses per kernel: " << _stats.max_mem_accesses_per_kernel
+        << " (" << format_number(_stats.max_mem_accesses_per_kernel) << ")" << std::endl;
+    out << "Average memory accesses per kernel: " << _stats.avg_mem_accesses
+        << " (" << format_number(_stats.avg_mem_accesses) << ")"  << std::endl;
+    out << "Total memory accesses: " << _stats.tot_mem_accesses
+        << " (" << format_number(_stats.tot_mem_accesses) << ")"  << std::endl;
     out.close();
 }

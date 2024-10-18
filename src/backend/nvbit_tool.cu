@@ -73,7 +73,7 @@ void nvbit_at_init() {
         active_region = false;
     }
 
-    yosemite_tool_enable();
+    yosemite_init();
 
     std::string pad(100, '-');
     printf("%s\n", pad.c_str());

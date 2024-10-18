@@ -32,11 +32,19 @@ YosemiteResult_t yosemite_kernel_start_callback(std::string kernel_name);
 
 YosemiteResult_t yosemite_kernel_end_callback(uint64_t mem_accesses);
 
+YosemiteResult_t yosemite_tensor_malloc_callback(DevPtr ptr, int64_t alloc_size,
+                                int64_t total_allocated, int64_t total_reserved);
+
+YosemiteResult_t yosemite_tensor_free_callback(DevPtr ptr, int64_t alloc_size,
+                                int64_t total_allocated, int64_t total_reserved);
+
 YosemiteResult_t yosemite_memory_access_analysis();
 
 YosemiteResult_t yosemite_tool_enable();
 
 YosemiteResult_t yosemite_tool_disable();
+
+YosemiteResult_t yosemite_torch_prof_enable();
 
 YosemiteResult_t yosemite_init();
 

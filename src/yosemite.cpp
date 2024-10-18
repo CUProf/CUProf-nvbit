@@ -2,6 +2,7 @@
 #include "tools/app_metric.h"
 #include "tools/tool.h"
 #include "utils/event.h"
+#include "torch/torch_prof.h"
 
 #include <memory>
 #include <map>
@@ -92,6 +93,9 @@ YosemiteResult_t yosemite_tool_disable() {
 
 
 YosemiteResult_t yosemite_init() {
+    yosemite_tool_enable();
+    yosemite_torch_prof_enable();
+
     return YOSEMITE_SUCCESS;
 }
 
@@ -103,4 +107,20 @@ YosemiteResult_t yosemite_flush() {
     return YOSEMITE_SUCCESS;
 }
 
+
+YosemiteResult_t yosemite_tensor_malloc_callback(DevPtr ptr, int64_t alloc_size,
+                                    int64_t total_allocated, int64_t total_reserved) {
+    return YOSEMITE_SUCCESS;
+}
+
+YosemiteResult_t yosemite_tensor_free_callback(DevPtr ptr, int64_t alloc_size,
+                                    int64_t total_allocated, int64_t total_reserved) {
+    return YOSEMITE_SUCCESS;
+}
+
+YosemiteResult_t yosemite_torch_prof_enable() {
+    TorchProf& torch_prof = TorchProf::getInstance();
+    torch_prof.enable_torch_callback();
+    return YOSEMITE_SUCCESS;
+}
 

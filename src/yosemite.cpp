@@ -1,5 +1,6 @@
 #include "yosemite.h"
 #include "tools/app_metric.h"
+#include "tools/mem_trace.h"
 #include "tools/tool.h"
 #include "utils/event.h"
 #include "torch_interface.h"
@@ -61,7 +62,10 @@ YosemiteResult_t yosemite_kernel_end_callback(uint64_t mem_accesses) {
 }
 
 
-YosemiteResult_t yosemite_memory_access_analysis() {
+YosemiteResult_t yosemite_memory_access_analysis(mem_access_t* ma) {
+    for (auto &tool : _tools) {
+        tool.second->mem_access_analysis(ma);
+    }
     return YOSEMITE_SUCCESS;
 }
 
@@ -75,11 +79,20 @@ YosemiteResult_t yosemite_tool_enable(YosemiteAnalysisTool_t& tool) {
         return YOSEMITE_NOT_IMPLEMENTED;
     }
 
-    if (std::string(tool_name) == "app_metric") {
+    if (std::string(tool_name) == "app_metric")
+    {
         fprintf(stdout, "Enabling app_metric tool.\n");
         tool = YOSEMITE_APP_METRICE;
         _tools.emplace(YOSEMITE_APP_METRICE, std::make_shared<AppMetrics>());
-    } else {
+    }
+    else if (std::string(tool_name) == "mem_trace")
+    {
+        fprintf(stdout, "Enabling mem_trace tool.\n");
+        tool = YOSEMITE_MEM_TRACE;
+        _tools.emplace(YOSEMITE_MEM_TRACE, std::make_shared<MemTrace>());
+    }
+    else
+    {
         fprintf(stdout, "Tool not found.\n");
         return YOSEMITE_NOT_IMPLEMENTED;
     }

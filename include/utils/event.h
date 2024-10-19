@@ -59,6 +59,7 @@ typedef std::shared_ptr<Event> EventPtr_t;
 typedef struct KernelLauch : public Event {
     uint64_t end_time;
     std::string kernel_name;
+    uint32_t kernel_id;
     uint64_t mem_accesses;
 
     KernelLauch() {

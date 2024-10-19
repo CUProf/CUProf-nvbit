@@ -6,15 +6,14 @@
 #include <stdio.h>
 #include <unordered_set>
 
-/* every tool needs to include this once */
-#include "nvbit_tool.h"
-
 /* nvbit interface file */
 #include "nvbit.h"
 
 /* nvbit utility functions */
 #include "utils/utils.h"
 #include "yosemite.h"
+
+namespace yosemite_app_metric {
 
 /* kernel id counter, maintained in system memory */
 uint32_t kernel_id = 0;
@@ -375,6 +374,12 @@ void app_metric_nvbit_at_cuda_event(CUcontext ctx, int is_exit, nvbit_api_cuda_t
     }
 }
 
+void app_metric_nvbit_at_ctx_init(CUcontext ctx) {}
+
+void app_metric_nvbit_at_ctx_term(CUcontext ctx) {}
+
 void app_metric_nvbit_at_term() {
     yosemite_flush();
 }
+
+} // namespace yosemite_app_metric

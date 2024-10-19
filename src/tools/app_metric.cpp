@@ -1,6 +1,5 @@
 
 #include "tools/app_metric.h"
-#include "utils/event.h"
 #include "utils/helper.h"
 
 #include <algorithm>
@@ -95,8 +94,6 @@ void AppMetrics::mem_alloc_callback(std::shared_ptr<MemAlloc_t> mem) {
 
 
 void AppMetrics::mem_free_callback(std::shared_ptr<MemFree_t> mem) {
-    printf("Freeing memory at %llu\n", mem->addr);
-    printf("size: %lu\n", active_memories.size());
     auto it = active_memories.find(mem->addr);
     assert(it != active_memories.end());
     _stats.cur_mem_usage -= it->second->size;
@@ -104,6 +101,9 @@ void AppMetrics::mem_free_callback(std::shared_ptr<MemFree_t> mem) {
 
     _timer.increment(true);
 }
+
+
+void AppMetrics::mem_access_analysis(mem_access_t* ma) {}
 
 
 void AppMetrics::flush() {

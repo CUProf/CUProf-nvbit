@@ -29,7 +29,7 @@ extern "C" __device__ __noinline__ void count_mem_access(int num_instrs,
     }
 }
 
-extern "C" __device__ __noinline__ void count_pred_off(int predicate,
+extern "C" __device__ __noinline__ void count_pred_off_mem_access(int predicate,
                                                        int count_warp_level,
                                                        uint64_t pcounter) {
     /* all the active threads will compute the active mask */

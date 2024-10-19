@@ -40,13 +40,13 @@ YosemiteResult_t yosemite_tensor_free_callback(DevPtr ptr, int64_t alloc_size,
 
 YosemiteResult_t yosemite_memory_access_analysis();
 
-YosemiteResult_t yosemite_tool_enable();
+YosemiteResult_t yosemite_tool_enable(YosemiteAnalysisTool_t& tool);
 
 YosemiteResult_t yosemite_tool_disable();
 
 YosemiteResult_t yosemite_torch_prof_enable();
 
-YosemiteResult_t yosemite_init();
+YosemiteResult_t yosemite_init(YosemiteAnalysisTool_t& tool);
 
 YosemiteResult_t yosemite_flush();
 

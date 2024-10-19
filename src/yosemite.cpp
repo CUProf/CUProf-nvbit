@@ -66,7 +66,7 @@ YosemiteResult_t yosemite_memory_access_analysis() {
 }
 
 
-YosemiteResult_t yosemite_tool_enable() {
+YosemiteResult_t yosemite_tool_enable(YosemiteAnalysisTool_t& tool) {
     const char* tool_name = std::getenv("YOSEMITE_TOOL_NAME");
     if (tool_name) {
         fprintf(stdout, "YOSEMITE_TOOL_NAME: %s\n", tool_name);
@@ -77,6 +77,7 @@ YosemiteResult_t yosemite_tool_enable() {
 
     if (std::string(tool_name) == "app_metric") {
         fprintf(stdout, "Enabling app_metric tool.\n");
+        tool = YOSEMITE_APP_METRICE;
         _tools.emplace(YOSEMITE_APP_METRICE, std::make_shared<AppMetrics>());
     } else {
         fprintf(stdout, "Tool not found.\n");
@@ -92,8 +93,8 @@ YosemiteResult_t yosemite_tool_disable() {
 }
 
 
-YosemiteResult_t yosemite_init() {
-    yosemite_tool_enable();
+YosemiteResult_t yosemite_init(YosemiteAnalysisTool_t& tool) {
+    yosemite_tool_enable(tool);
 
     // check env var YOSEMITE_TORCH_PROFILE is 0 or 1
     const char* torch_prof = std::getenv("YOSEMITE_TORCH_PROFILE");

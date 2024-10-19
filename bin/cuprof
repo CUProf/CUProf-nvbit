@@ -80,8 +80,10 @@ fi
 if [ ${EXECUTABLE} == "python" ] || [ ${EXECUTABLE} == "python3" ];
 then
     export APP_NAME=$(basename $(echo $ARGS | cut -d' ' -f1) .py)
+    export YOSEMITE_TORCH_PROFILE=1
 else
     export APP_NAME=${EXECUTABLE#./}
+    export YOSEMITE_TORCH_PROFILE=0
 fi
 
 if [ ! -z ${VERBOSE} ]
@@ -106,4 +108,9 @@ else
     error_hint "Invalid tool name."
 fi
 
-CUDA_INJECTION64_PATH=${CU_PROF_HOME}/lib/libcuda-CUProf.so ${EXECUTABLE} ${ARGS} &> ${OUTPUT_REDIRECT}
+if [ ${YOSEMITE_TORCH_PROFILE} == 1 ]
+then
+    CUDA_INJECTION64_PATH=${CU_PROF_HOME}/lib/libtorch-CUProf.so ${EXECUTABLE} ${ARGS} &> ${OUTPUT_REDIRECT}
+else
+    LD_PRELOAD=${CU_PROF_HOME}/lib/libcuda-CUProf.so ${EXECUTABLE} ${ARGS} &> ${OUTPUT_REDIRECT}
+fi

@@ -1,4 +1,4 @@
-#include "torch/torch_prof.h"
+#include "torch_prof.h"
 #include "yosemite.h"
 
 typedef unsigned long long DevPtr;

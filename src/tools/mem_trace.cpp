@@ -129,7 +129,6 @@ void MemTrace::mem_free_callback(std::shared_ptr<MemFree_t> mem) {
 
 
 void MemTrace::mem_access_analysis(mem_access_t* ma) {
-    printf("==================================================================%p\n", ma);
     for (int i = 0; i < GPU_WARP_SIZE; i++) {
         TraceEntry entry;
         if (ma->addrs[i] != 0) {

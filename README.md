@@ -1,4 +1,4 @@
-[![wakatime](https://wakatime.com/badge/github/Lin-Mao/DrGPUM.svg)](https://wakatime.com/badge/github/Lin-Mao/DrGPUM)
+[![wakatime](https://wakatime.com/badge/github/Lin-Mao/CUProf.svg)](https://wakatime.com/badge/github/Lin-Mao/CUProf)
 
 # CUProf
 A collection of CUDA application profiler.
@@ -7,6 +7,7 @@ A collection of CUDA application profiler.
 
 * CUDA >= 12.0
 * NVBit = 1.7.1
+* PyTorch >= 2.0
 
 ## Tools
 
@@ -14,3 +15,18 @@ A collection of CUDA application profiler.
 
 
 * `app_metric`: Dump application information, such as memory reference counts, etc.
+
+
+## Usage
+
+* CUDA application
+
+```shell
+cuprof -v -t app_metric/mem_trace ./executable [arguments]
+```
+
+* PyTorch application
+
+```shell
+cuprof -v -t app_metric/mem_trace python3 model.py [arguments]
+```

@@ -42,10 +42,24 @@ uint32_t kernel_id = 0;
 
 std::map<uint64_t, std::shared_ptr<KernelLauch_t>> kernel_events;
 std::map<uint64_t, std::shared_ptr<MemAlloc_t>> alloc_events;
-
 std::map<DevPtr, std::shared_ptr<MemAlloc_t>> active_memories;
 
+std::map<uint64_t, std::shared_ptr<TenAlloc>> tensor_events;
+std::map<DevPtr, std::shared_ptr<TenAlloc>> active_tensors;
+
 std::list<TraceEntry> _traces;
+
+
+MemTrace::MemTrace() : Tool(YOSEMITE_MEM_TRACE) {
+    const char* torch_prof = std::getenv("YOSEMITE_TORCH_PROFILE");
+    if (torch_prof && std::string(torch_prof) == "1") {
+        fprintf(stdout, "Enabling torch profiler in MemTrace.\n");
+        _torch_enabled = true;
+    }
+}
+
+
+MemTrace::~MemTrace() {}
 
 
 void MemTrace::kernel_start_callback(std::shared_ptr<KernelLauch_t> kernel) {
@@ -90,8 +104,13 @@ void MemTrace::kernel_trace_flush(std::shared_ptr<KernelLauch_t> kernel) {
             << std::endl;
     }
 
-    for (auto evt : alloc_events) {
+    for (auto evt : active_memories) {
         out << "ALLOCATION: " << " " << evt.second->addr
+            << " " << evt.second->size << std::endl;
+    }
+
+    for (auto evt : active_tensors) {
+        out << "TENSOR: " << " " << evt.second->addr
             << " " << evt.second->size << std::endl;
     }
 
@@ -128,6 +147,23 @@ void MemTrace::mem_free_callback(std::shared_ptr<MemFree_t> mem) {
 }
 
 
+void MemTrace::ten_alloc_callback(std::shared_ptr<TenAlloc_t> ten) {
+    tensor_events.emplace(_timer.get(), ten);
+    active_tensors.emplace(ten->addr, ten);
+
+    _timer.increment(true);
+}
+
+
+void MemTrace::ten_free_callback(std::shared_ptr<TenFree_t> ten) {
+    auto it = active_tensors.find(ten->addr);
+    assert(it != active_tensors.end());
+    active_tensors.erase(it);
+
+    _timer.increment(true);
+}
+
+
 void MemTrace::mem_access_analysis(mem_access_t* ma) {
     for (int i = 0; i < GPU_WARP_SIZE; i++) {
         TraceEntry entry;
@@ -159,6 +195,12 @@ void MemTrace::evt_callback(EventPtr_t evt) {
             break;
         case EventType_MEM_FREE:
             mem_free_callback(std::dynamic_pointer_cast<MemFree_t>(evt));
+            break;
+        case EventType_TEN_ALLOC:
+            ten_alloc_callback(std::dynamic_pointer_cast<TenAlloc_t>(evt));
+            break;
+        case EventType_TEN_FREE:
+            ten_free_callback(std::dynamic_pointer_cast<TenFree_t>(evt));
             break;
         default:
             break;

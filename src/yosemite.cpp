@@ -130,11 +130,19 @@ YosemiteResult_t yosemite_flush() {
 
 YosemiteResult_t yosemite_tensor_malloc_callback(DevPtr ptr, int64_t alloc_size,
                                     int64_t total_allocated, int64_t total_reserved) {
+    for (auto &tool : _tools) {
+        auto ten_alloc = std::make_shared<TenAlloc_t>(ptr, alloc_size);
+        tool.second->evt_callback(ten_alloc);
+    }
     return YOSEMITE_SUCCESS;
 }
 
 YosemiteResult_t yosemite_tensor_free_callback(DevPtr ptr, int64_t alloc_size,
                                     int64_t total_allocated, int64_t total_reserved) {
+    for (auto &tool : _tools) {
+        auto ten_free = std::make_shared<TenFree_t>(ptr);
+        tool.second->evt_callback(ten_free);
+    }
     return YOSEMITE_SUCCESS;
 }
 

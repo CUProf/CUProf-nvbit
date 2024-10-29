@@ -21,9 +21,9 @@ private:
     TorchProf() {}
     ~TorchProf() {}
 
-    class TensorCallback : public c10::MemoryReportingInfoBase {
+    class TorchCallback : public c10::MemoryReportingInfoBase {
     public:
-        TensorCallback() {}
+        TorchCallback() {}
 
         bool memoryProfilingEnabled() const override { return true; }
 
@@ -34,10 +34,10 @@ private:
         void reportMemoryUsage(void* ptr, int64_t alloc_size, int64_t total_allocated,
                                 int64_t total_reserved, c10::Device device) override;
 #endif
-    };  // class TensorCallback
+    };  // class TorchCallback
 
-    std::shared_ptr<TensorCallback> new_torch_profiler() {
-        return std::make_shared<TensorCallback>();
+    std::shared_ptr<TorchCallback> new_torch_profiler() {
+        return std::make_shared<TorchCallback>();
     }
 };  // class TorchProf
 

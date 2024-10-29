@@ -38,7 +38,9 @@ typedef enum EventType {
     EventType_MEM_FREE = 3,
     EventType_MEM_COPY = 4,
     EventType_MEM_SET = 5,
-    EventTypeCount = 6,
+    EventType_TEN_ALLOC = 6,
+    EventType_TEN_FREE = 7,
+    EventTypeCount = 8,
 }EventType_t;
 
 
@@ -159,6 +161,40 @@ typedef struct MemSet : public Event {
 
     ~MemSet() = default;
 }MemSet_t;
+
+typedef struct TenAlloc : public Event {
+    DevPtr addr;
+    uint64_t size;
+    uint64_t release_time;
+    int alloc_type;
+
+    TenAlloc() {
+        evt_type = EventType_TEN_ALLOC;
+    }
+
+    TenAlloc(DevPtr addr, uint64_t size)
+        : addr(addr), size(size) {
+            evt_type = EventType_TEN_ALLOC;
+        }
+
+    ~TenAlloc() = default;
+}TenAlloc_t;
+
+typedef struct TenFree : public Event {
+    DevPtr addr;
+    uint64_t size;
+
+    TenFree() {
+        evt_type = EventType_TEN_FREE;
+    }
+
+    TenFree(DevPtr addr)
+        : addr(addr) {
+            evt_type = EventType_TEN_FREE;
+        }
+
+    ~TenFree() = default;
+}TenFree_t;
 
 }   // yosemite
 

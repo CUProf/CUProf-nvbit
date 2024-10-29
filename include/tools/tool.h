@@ -21,6 +21,7 @@ public:
 protected:
     YosemiteAnalysisTool_t _tool;
 
+    bool _torch_enabled = false;
 };
 
 }   // yosemite

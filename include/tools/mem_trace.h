@@ -10,9 +10,9 @@ namespace yosemite {
 
 class MemTrace final : public Tool {
 public:
-    MemTrace() : Tool(YOSEMITE_MEM_TRACE) {}
+    MemTrace();
 
-    ~MemTrace() {}
+    ~MemTrace();
 
     void kernel_start_callback(std::shared_ptr<KernelLauch_t> kernel);
 
@@ -21,6 +21,10 @@ public:
     void mem_alloc_callback(std::shared_ptr<MemAlloc_t> mem);
 
     void mem_free_callback(std::shared_ptr<MemFree_t> mem);
+
+    void ten_alloc_callback(std::shared_ptr<TenAlloc_t> ten);
+
+    void ten_free_callback(std::shared_ptr<TenFree_t> ten);
 
     void mem_access_analysis(mem_access_t* ma);
 

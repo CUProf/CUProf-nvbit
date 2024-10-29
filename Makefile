@@ -37,6 +37,7 @@ PYTHON_LIB_DIR=$(shell python3 -c "import sysconfig; print(sysconfig.get_path('s
 TORCH_INCLUDES=-I$(TORCH_DIR)/include -I$(TORCH_DIR)/include/torch/csrc/api/include -I$(PYTHON_INCLUDE_DIR)
 TORCH_LDFLAGS=-L$(TORCH_DIR)/lib -Xlinker -rpath -Xlinker $(TORCH_DIR)/lib -L$(PYTHON_LIB_DIR) -Xlinker -rpath -Xlinker $(PYTHON_LIB_DIR)
 TORCH_LIBS=-lc10 -ltorch -ltorch_cpu
+PY_FRAME_INC=-I./pybind11/include -I$(PYTHON_INCLUDE_DIR)
 
 LIBS=-L$(NVBIT_PATH) -lnvbit
 NVCC_PATH=-L $(subst bin/nvcc,lib64,$(shell which nvcc | tr -s /))
@@ -79,7 +80,7 @@ $(OBJ_DIR)%.o: $(SRC_DIR)/%.cpp
 	$(CXX) -std=c++17 $(INCLUDES) -Wall $(DEBUG_FLAGS) -fPIC -c $< -o $@
 
 $(OBJ_DIR)%.o: $(SRC_DIR)/*/%.cpp
-	$(CXX) -std=c++17 $(INCLUDES) -Wall $(DEBUG_FLAGS) -fPIC -c $< -o $@
+	$(CXX) -std=c++17 $(INCLUDES) $(PY_FRAME_INC) -Wall $(DEBUG_FLAGS) -fPIC -c $< -o $@
 
 $(OBJ_DIR)%.o: $(SRC_DIR)/backend/%.cu
 	$(NVCC) -dc -c -std=c++17 $(INCLUDES) -Xptxas -cloning=no -Xcompiler -Wall -arch=$(ARCH) $(DEBUG_FLAGS) -Xcompiler -fPIC $< -o $@

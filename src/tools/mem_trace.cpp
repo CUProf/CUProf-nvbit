@@ -1,6 +1,7 @@
 #include "tools/mem_trace.h"
 #include "utils/helper.h"
 #include "utils/event.h"
+#include "utils/python_frame.h"
 
 #include <cstdint>
 #include <map>
@@ -150,6 +151,9 @@ void MemTrace::mem_free_callback(std::shared_ptr<MemFree_t> mem) {
 void MemTrace::ten_alloc_callback(std::shared_ptr<TenAlloc_t> ten) {
     tensor_events.emplace(_timer.get(), ten);
     active_tensors.emplace(ten->addr, ten);
+
+    std::cout << get_frame_string() << std::endl;
+    assert(false);
 
     _timer.increment(true);
 }

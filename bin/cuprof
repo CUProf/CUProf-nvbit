@@ -110,7 +110,7 @@ fi
 
 if [ ${YOSEMITE_TORCH_PROFILE} == 1 ]
 then
-    CUDA_INJECTION64_PATH=${CU_PROF_HOME}/lib/libtorch-CUProf.so ${EXECUTABLE} ${ARGS} &> ${OUTPUT_REDIRECT}
+    LD_PRELOAD=${CU_PROF_HOME}/lib/libtorch-CUProf.so ${EXECUTABLE} ${ARGS} &> ${OUTPUT_REDIRECT}
 else
     LD_PRELOAD=${CU_PROF_HOME}/lib/libcuda-CUProf.so ${EXECUTABLE} ${ARGS} &> ${OUTPUT_REDIRECT}
 fi

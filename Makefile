@@ -31,21 +31,21 @@ endif
 NVBIT_PATH=core/
 INCLUDES=-I$(NVBIT_PATH) -Iinclude/ -Itorch/include/
 
-TORCH_DIR=$(shell python3 -c "import torch; import os; print(os.path.dirname(torch.__file__))")
-PYTHON_INCLUDE_DIR=$(shell python3 -c "import sysconfig; print(sysconfig.get_path('include'))")
-PYTHON_LIB_DIR=$(shell python3 -c "import sysconfig; print(sysconfig.get_path('stdlib'))")
-PYTHON_VERSION=$(shell python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
-TORCH_INCLUDES=-I$(TORCH_DIR)/include -I$(TORCH_DIR)/include/torch/csrc/api/include -I$(PYTHON_INCLUDE_DIR)
-TORCH_LDFLAGS=-L$(TORCH_DIR)/lib -Xlinker -rpath -Xlinker $(TORCH_DIR)/lib -L$(PYTHON_LIB_DIR) -Xlinker -rpath -Xlinker $(PYTHON_LIB_DIR)
-TORCH_LIBS=-lc10 -ltorch -ltorch_cpu
-PY_FRAME_INC=-I./pybind11/include -I$(PYTHON_INCLUDE_DIR)
-PY_FRAME_LDFLAGS=-L$(PYTHON_LIB_DIR) -Xlinker -rpath -Xlinker $(PYTHON_LIB_DIR)
-PY_FRAME_LDFLAGS+=-L$(PYTHON_LIB_DIR)/../ -Xlinker -rpath -Xlinker $(PYTHON_LIB_DIR)/../
-PY_FRAME_LIBS=-lpython$(PYTHON_VERSION)
-UNWIND_LIBS=-lunwind
+TORCH_DIR = $(shell python3 -c "import torch; import os; print(os.path.dirname(torch.__file__))")
+PYTHON_INCLUDE_DIR = $(shell python3 -c "import sysconfig; print(sysconfig.get_path('include'))")
+PYTHON_LIB_DIR = $(shell python3 -c "import sysconfig; print(sysconfig.get_path('stdlib'))")
+PYTHON_VERSION = $(shell python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
+TORCH_INCLUDES = -I$(TORCH_DIR)/include -I$(TORCH_DIR)/include/torch/csrc/api/include -I$(PYTHON_INCLUDE_DIR)
+TORCH_LDFLAGS = -L$(TORCH_DIR)/lib -Xlinker -rpath -Xlinker $(TORCH_DIR)/lib -L$(PYTHON_LIB_DIR) -Xlinker -rpath -Xlinker $(PYTHON_LIB_DIR)
+TORCH_LIBS = -lc10 -ltorch -ltorch_cpu
+PY_FRAME_INC = -I./pybind11/include -I$(PYTHON_INCLUDE_DIR)
+PY_FRAME_LDFLAGS = -L$(PYTHON_LIB_DIR) -Xlinker -rpath -Xlinker $(PYTHON_LIB_DIR)
+PY_FRAME_LDFLAGS += -L$(PYTHON_LIB_DIR)/../ -Xlinker -rpath -Xlinker $(PYTHON_LIB_DIR)/../
+PY_FRAME_LIBS = -lpython$(PYTHON_VERSION)
+UNWIND_LIBS = -lunwind
 
-LIBS=-L$(NVBIT_PATH) -lnvbit
-NVCC_PATH=-L $(subst bin/nvcc,lib64,$(shell which nvcc | tr -s /))
+LIBS = -L$(NVBIT_PATH) -lnvbit
+NVCC_PATH = -L $(subst bin/nvcc,lib64,$(shell which nvcc | tr -s /))
 
 SRC_DIR := src/
 OBJ_DIR := obj/

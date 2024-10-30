@@ -1,5 +1,3 @@
-[![wakatime](https://wakatime.com/badge/github/Lin-Mao/CUProf.svg)](https://wakatime.com/badge/github/Lin-Mao/CUProf)
-
 # CUProf
 A collection of CUDA application profiler.
 

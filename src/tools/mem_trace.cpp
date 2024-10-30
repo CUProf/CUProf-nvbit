@@ -2,6 +2,7 @@
 #include "utils/helper.h"
 #include "utils/event.h"
 #include "utils/python_frame.h"
+#include "utils/cxx_backtrace.h"
 
 #include <cstdint>
 #include <map>
@@ -135,6 +136,10 @@ void MemTrace::mem_alloc_callback(std::shared_ptr<MemAlloc_t> mem) {
     alloc_events.emplace(_timer.get(), mem);
     active_memories.emplace(mem->addr, mem);
 
+    std::cout << get_cxx_backtrace() << std::endl;
+    // std::cout << "-----------------------------------" << std::endl;
+    std::cout << get_cxx_backtrace(true) << std::endl;
+
     _timer.increment(true);
 }
 
@@ -152,8 +157,8 @@ void MemTrace::ten_alloc_callback(std::shared_ptr<TenAlloc_t> ten) {
     tensor_events.emplace(_timer.get(), ten);
     active_tensors.emplace(ten->addr, ten);
 
+    // std::cout << get_cxx_backtrace(true) << std::endl;
     std::cout << get_frame_string() << std::endl;
-    assert(false);
 
     _timer.increment(true);
 }

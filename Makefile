@@ -42,6 +42,7 @@ PY_FRAME_INC=-I./pybind11/include -I$(PYTHON_INCLUDE_DIR)
 PY_FRAME_LDFLAGS=-L$(PYTHON_LIB_DIR) -Xlinker -rpath -Xlinker $(PYTHON_LIB_DIR)
 PY_FRAME_LDFLAGS+=-L$(PYTHON_LIB_DIR)/../ -Xlinker -rpath -Xlinker $(PYTHON_LIB_DIR)/../
 PY_FRAME_LIBS=-lpython$(PYTHON_VERSION)
+UNWIND_LIBS=-lunwind
 
 LIBS=-L$(NVBIT_PATH) -lnvbit
 NVCC_PATH=-L $(subst bin/nvcc,lib64,$(shell which nvcc | tr -s /))
@@ -78,7 +79,7 @@ $(TORCH_OBJ_DIR):
 	mkdir -p $@
 
 $(NVBIT_TOOL): $(OBJS) $(NVBIT_PATH)/libnvbit.a
-	$(NVCC) -arch=$(ARCH) $(DEBUG_FLAGS) $(PY_FRAME_LDFLAGS) $(OBJS) $(PY_FRAME_LIBS) $(LIBS) $(NVCC_PATH) -lcuda -lcudart_static -shared -o $@
+	$(NVCC) -arch=$(ARCH) $(DEBUG_FLAGS) $(PY_FRAME_LDFLAGS) $(OBJS) $(PY_FRAME_LIBS) $(LIBS) $(UNWIND_LIBS) $(NVCC_PATH) -lcuda -lcudart_static -shared -o $@
 
 $(OBJ_DIR)%.o: $(SRC_DIR)/%.cpp
 	$(CXX) -std=c++17 $(INCLUDES) -Wall $(DEBUG_FLAGS) -fPIC -c $< -o $@
@@ -93,7 +94,7 @@ $(OBJ_DIR)%.o:: $(SRC_DIR)/inj_fns/%.cu
 	$(NVCC) $(INCLUDES) $(MAXRREGCOUNT_FLAG) -Xptxas -astoolspatch --keep-device-functions -arch=$(ARCH) -Xcompiler -Wall -Xcompiler -fPIC -c $< -o $@
 
 $(NVBIT_TORCH_TOOL): $(TORCH_OBJS) $(OBJS) $(NVBIT_PATH)/libnvbit.a
-	$(NVCC) -arch=$(ARCH) $(DEBUG_FLAGS) $(TORCH_LDFLAGS) $(TORCH_OBJS) $(OBJS) $(TORCH_LIBS) $(LIBS) $(NVCC_PATH) -lcuda -lcudart_static -shared -o $@
+	$(NVCC) -arch=$(ARCH) $(DEBUG_FLAGS) $(TORCH_LDFLAGS) $(TORCH_OBJS) $(OBJS) $(TORCH_LIBS) $(LIBS) $(UNWIND_LIBS) $(NVCC_PATH) -lcuda -lcudart_static -shared -o $@
 
 $(TORCH_OBJ_DIR)%.o: $(TORCH_SRC_DIR)/*/%.cpp
 	$(CXX) -std=c++17 $(INCLUDES) $(TORCH_INCLUDES) -Wall $(DEBUG_FLAGS) -fPIC -c $< -o $@
